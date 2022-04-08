@@ -6,6 +6,8 @@ import Pyro4
 import os
 import socket
 
+import binascii
+
 
 @Pyro4.expose
 class ServerHost(object):
@@ -28,9 +30,13 @@ class ServerHost(object):
             data = wf.readframes(CHUNK)
 
 
+        #b = ''.join(chr(x) for x in b)
+        hex_data = binascii.hexlify(b)
+        str_data = hex_data.decode('utf-8')
+
         wf.close()
 
-        return b
+        return str_data
 
 
 daemon = Pyro4.Daemon(host=socket.gethostbyname(socket.gethostname()))                # make a Pyro daemon
