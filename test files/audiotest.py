@@ -1,8 +1,6 @@
 import pyaudio
 import wave
 
-import pyaudio
-import wave
  
 FORMAT = pyaudio.paInt16
 CHANNELS = 1
