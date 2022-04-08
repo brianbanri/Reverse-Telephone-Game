@@ -5,6 +5,8 @@ import wave
 import Pyro4
 import socket
 
+import binascii
+
 FORMAT = pyaudio.paInt16
 CHANNELS = 1
 RATE = 44100
@@ -15,7 +17,9 @@ device_index = 2
 audio = pyaudio.PyAudio()
 
 serverhost = Pyro4.Proxy("PYRONAME:example.serverhost")    # use name server object lookup uri shortcut
-wf = serverhost.getAudio()
+b = serverhost.getAudio()
+
+b = binascii.unhexlify(b.encode('utf-8'))
 
 waveFile = wave.open("recordedFileFromByte.wav", 'wb')
 waveFile.setnchannels(CHANNELS)
@@ -33,10 +37,6 @@ stream = p.open(
     rate = wf.getframerate(),
     output = True
 )
-
-
-""" Play entire file """
-
 
 data = wf.readframes(CHUNK)
 while len(data) > 0:
