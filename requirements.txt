@@ -1,2 +1,5 @@
 Pyro4==4.82
 serpent==1.40
+playsound==1.2.2
+PyAudio-0.2.11-cp39-cp39-win_amd64.whl
+PyAudio-0.2.11-cp310-cp310-win_amd64.whl

@@ -1,4 +1,17 @@
+import pyaudio
+import wave
+
+FORMAT = pyaudio.paInt16
+CHANNELS = 1
+RATE = 44100
+CHUNK = 512
+RECORD_SECONDS = 3
+WAVE_OUTPUT_FILENAME = "recordedFile.wav"
+audio = pyaudio.PyAudio()
+FILE_NUM = 0
+
 def titleScreen():
+
 	print("\nWelcome to The Reverse Telephone Game!\n")
 	print("Type \"Start Local Game\" to start a new game on this device")
 	print("Type \"Host Game\" to host a new game")
@@ -8,27 +21,27 @@ def titleScreen():
 	print()
 
 	if user_input.lower() == "host game":
-		host_game()
+		host_game(audioDevice)
 	elif user_input.lower() == "join game":
-		join_game()
+		join_game(audioDevice)
 	elif user_input.lower() == "start local game":
-		start_local_game()
+		start_local_game(audioDevice)
 
-def start_local_game():
+def start_local_game(audioDevice):
 	print("starting local game...\n")
 	print("Enter number of players:")
 	player_count = int(input())
 	print()
 
-	start_game(player_count)
+	start_game(player_count, audioDevice)
 
-def host_game():
+def host_game(audioDevice):
 	print("hosting game...\n")
 
-def join_game():
+def join_game(audioDevice):
 	print("joining game...\n")
 
-def start_game(player_count):
+def start_game(player_count, audioDevice):
 	round_counter = 0
 
 	print("Game starting with %d players...\n" %player_count)
@@ -50,12 +63,13 @@ def start_game(player_count):
 	#End Round 2
 
 	#Start Round 3
+	#But we will be alternating between reverse and interpret rounds now 
 	round_counter += 1
 	while round_counter < player_count:
 		if round_counter % 2 == 1:
-			audio = reverse_round(audio, player_names, round_counter - 1)
+			audio = reverse_round(player_names, round_counter - 1)
 		else:
-			audio = interpret_round(audio, player_names, round_counter - 1)
+			audio = interpret_round(player_names, round_counter - 1)
 		round_counter += 1
 
 	#Start Round player_count
@@ -63,40 +77,61 @@ def start_game(player_count):
 		# Extra reverse for even number of player games
 		reverse_audio()
 
-	guess_round()
+	finalGuess = guess_round(player_names, round_counter - 1)
 	
 def round1(player_names):
 	prompt_player(player_names, 0)
 	print("%s enter a sentence:" %player_names[0])
 	sentence = input()
 
+	print()
+
 	return sentence
 
 def round2(sentence, player_names):
 	prompt_player(player_names, 1)
-	print("Record yourself saying this sentence(but actually just retype it): ")
+	print("Record yourself saying this sentence.")
 	print(sentence)
-	return record_audio()
+	print()
+	print("Ready to record?")
+	ready_check(player_names, 1)
+	record_audio()
+	print()
 
-def reverse_round(audio, player_names, i):
+def reverse_round(player_names, i):
 	prompt_player(player_names, i)
-	audio = reverse_audio(audio)
-	print("Record yourself saying repeating the sentence you will hear(but actually just retype it): ")
+	print("Record yourself saying repeating the sentence you will hear.")
 	ready_check(player_names, i)
-	play_audio(audio)
-	return record_audio()
+	reverse_audio()
+	play_audio()
+	print("Ready to record?")
+	ready_check(player_names, i)
+	record_audio()
+	print()
 	
 
-def interpret_round(audio, player_names, i):
+def interpret_round(player_names, i):
 	prompt_player(player_names, i)
-	audio = reverse_audio(audio)
-	print("Record your best guess of what the original sentence was after hearing the reversed audio(but actually just retype it): ")
+	print("Record your best guess of what the original sentence was after hearing the reversed audio.")
 	ready_check(player_names, i)
-	play_audio(audio)
-	return record_audio()
+	reverse_audio()
+	play_audio()
+	print("Ready to record?")
+	ready_check(player_names, i)
+	record_audio()
+	print()
 
-def guess_round():
-	pass
+def guess_round(player_names, i):
+	prompt_player(player_names, i)
+	print("Type your best guess of what the original sentence was after hearing audio.")
+	print("Ready to hear the recording?")
+	ready_check(player_names, i)
+	play_audio()
+	print("Type your answer: ")
+	sentence = input()
+
+	return sentence
+
 
 def prompt_player(player_names, i):
 	print("Pass the device to %s...\n" %player_names[i])
@@ -109,17 +144,97 @@ def ready_check(player_names, i):
 	print()
 
 def record_audio():
-	return input()
 
-def reverse_audio(audio):
-	return audio[::-1]
+	stream = audio.open(format=FORMAT, channels=CHANNELS,
+                rate=RATE, input=True,input_device_index = audioDevice,
+                frames_per_buffer=CHUNK)
+	print ("recording started")
+	Recordframes = []
+	 
+	for i in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
+	    data = stream.read(CHUNK)
+	    Recordframes.append(data)
+	print ("recording stopped")
+	 
+	stream.stop_stream()
+	stream.close()
 
-def play_audio(audio):
-	print(audio)
+	FILE_NUM += 1
+	WAVE_OUTPUT_FILENAME = WAVE_OUTPUT_FILENAME + str(FILE_NUM)
+	waveFile = wave.open(WAVE_OUTPUT_FILENAME, 'wb')
+	waveFile.setnchannels(CHANNELS)
+	waveFile.setsampwidth(audio.get_sample_size(FORMAT))
+	waveFile.setframerate(RATE)
+	waveFile.writeframes(b''.join(Recordframes))
+	waveFile.close()
+
+def reverse_audio():
+	wf = wave.open("WAVE_OUTPUT_FILENAME", 'rb')
+
+	stream = audio.open(
+	    format = audio.get_format_from_width(wf.getsampwidth()),
+	    channels = wf.getnchannels(),
+	    rate = wf.getframerate(),
+	    output = True
+	)
+
+	recording = []
+	data = wf.readframes(CHUNK)
+	while len(data) > 0:
+	    data = wf.readframes(CHUNK)
+	    recording.append(data)
+
+	recording = recording[::-1]
+	print("PLAYING: ",WAVE_OUTPUT_FILENAME)
+	waveFile = wave.open(WAVE_OUTPUT_FILENAME, 'wb') #concatenate file number here
+	waveFile.setnchannels(CHANNELS)
+	waveFile.setsampwidth(audio.get_sample_size(FORMAT))
+	waveFile.setframerate(RATE)
+	waveFile.writeframes(b''.join(recording))
+	waveFile.close()
+
+	stream.close()
+
+def play_audio():
+	wf = wave.open("recordedFile.wav", 'rb')
+
+	stream = audio.open(
+	    format = audio.get_format_from_width(wf.getsampwidth()),
+	    channels = wf.getnchannels(),
+	    rate = wf.getframerate(),
+	    output = True
+	)
+
+	data = wf.readframes(CHUNK)
+	while len(data) > 0:
+	    stream.write(data)
+	    data = wf.readframes(CHUNK)
+
+	stream.close()
+
+def setupAudioDevice():
+	print("----------------------record device list---------------------")
+	info = audio.get_host_api_info_by_index(0)
+	numdevices = info.get('deviceCount')
+	for i in range(0, numdevices):
+	        if (audio.get_device_info_by_host_api_device_index(0, i).get('maxInputChannels')) > 0:
+	            print("Input Device id ", i, " - ", audio.get_device_info_by_host_api_device_index(0, i).get('name'))
+
+	print("-------------------------------------------------------------")
+
+	index = int(input())
+	print("recording via index "+str(index))
+
+	return index
+
+
 
 def main():
 	titleScreen()
 
-
 if __name__ == "__main__":
+
+	audioDevice = setupAudioDevice();
 	main()
+
+#test
