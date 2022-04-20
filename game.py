@@ -8,6 +8,7 @@ CHUNK = 512
 RECORD_SECONDS = 3
 WAVE_OUTPUT_FILENAME = "recordedFile.wav"
 audio = pyaudio.PyAudio()
+FILE_NUM = 0
 
 def titleScreen():
 
@@ -158,6 +159,8 @@ def record_audio():
 	stream.stop_stream()
 	stream.close()
 
+	FILE_NUM += 1
+	WAVE_OUTPUT_FILENAME = WAVE_OUTPUT_FILENAME + str(FILE_NUM)
 	waveFile = wave.open(WAVE_OUTPUT_FILENAME, 'wb')
 	waveFile.setnchannels(CHANNELS)
 	waveFile.setsampwidth(audio.get_sample_size(FORMAT))
@@ -166,7 +169,7 @@ def record_audio():
 	waveFile.close()
 
 def reverse_audio():
-	wf = wave.open("recordedFile.wav", 'rb')
+	wf = wave.open("WAVE_OUTPUT_FILENAME", 'rb')
 
 	stream = audio.open(
 	    format = audio.get_format_from_width(wf.getsampwidth()),
@@ -182,8 +185,8 @@ def reverse_audio():
 	    recording.append(data)
 
 	recording = recording[::-1]
-
-	waveFile = wave.open(WAVE_OUTPUT_FILENAME, 'wb')
+	print("PLAYING: ",WAVE_OUTPUT_FILENAME)
+	waveFile = wave.open(WAVE_OUTPUT_FILENAME, 'wb') #concatenate file number here
 	waveFile.setnchannels(CHANNELS)
 	waveFile.setsampwidth(audio.get_sample_size(FORMAT))
 	waveFile.setframerate(RATE)
