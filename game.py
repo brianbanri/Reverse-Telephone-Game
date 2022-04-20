@@ -6,7 +6,7 @@ CHANNELS = 1
 RATE = 44100
 CHUNK = 512
 RECORD_SECONDS = 3
-WAVE_OUTPUT_FILENAME = "recordedFile.wav"
+WAVE_OUTPUT_FILENAME = "recordedFile0" #add.wav in playback
 audio = pyaudio.PyAudio()
 FILE_NUM = 0
 
@@ -159,9 +159,12 @@ def record_audio():
 	stream.stop_stream()
 	stream.close()
 
+	global FILE_NUM 
 	FILE_NUM += 1
-	WAVE_OUTPUT_FILENAME = WAVE_OUTPUT_FILENAME + str(FILE_NUM)
-	waveFile = wave.open(WAVE_OUTPUT_FILENAME, 'wb')
+	global WAVE_OUTPUT_FILENAME 
+	WAVE_OUTPUT_FILENAME = WAVE_OUTPUT_FILENAME[:-1]
+	WAVE_OUTPUT_FILENAME += str(FILE_NUM)
+	waveFile = wave.open(WAVE_OUTPUT_FILENAME+".wav", 'wb')
 	waveFile.setnchannels(CHANNELS)
 	waveFile.setsampwidth(audio.get_sample_size(FORMAT))
 	waveFile.setframerate(RATE)
@@ -169,7 +172,7 @@ def record_audio():
 	waveFile.close()
 
 def reverse_audio():
-	wf = wave.open("WAVE_OUTPUT_FILENAME", 'rb')
+	wf = wave.open(WAVE_OUTPUT_FILENAME+".wav", 'rb')
 
 	stream = audio.open(
 	    format = audio.get_format_from_width(wf.getsampwidth()),
@@ -186,7 +189,7 @@ def reverse_audio():
 
 	recording = recording[::-1]
 	print("PLAYING: ",WAVE_OUTPUT_FILENAME)
-	waveFile = wave.open(WAVE_OUTPUT_FILENAME, 'wb') #concatenate file number here
+	waveFile = wave.open(WAVE_OUTPUT_FILENAME+".wav", 'wb') #concatenate file number here
 	waveFile.setnchannels(CHANNELS)
 	waveFile.setsampwidth(audio.get_sample_size(FORMAT))
 	waveFile.setframerate(RATE)
@@ -196,7 +199,7 @@ def reverse_audio():
 	stream.close()
 
 def play_audio():
-	wf = wave.open("recordedFile.wav", 'rb')
+	wf = wave.open(WAVE_OUTPUT_FILENAME+".wav", 'rb')
 
 	stream = audio.open(
 	    format = audio.get_format_from_width(wf.getsampwidth()),
