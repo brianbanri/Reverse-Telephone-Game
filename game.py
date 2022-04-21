@@ -32,6 +32,9 @@ def start_local_game(audioDevice):
 	print("Enter number of players:")
 	player_count = int(input())
 	print()
+	if(player_count < 4):
+		print("You need 4 or more players to play this game.")
+		quit() #calling the title screen here leads to an error once the main game is completed with optimum players, so I chose to quit instead.
 
 	start_game(player_count, audioDevice)
 
