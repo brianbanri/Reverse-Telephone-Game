@@ -48,7 +48,7 @@ def start_game(player_count, audioDevice):
 
 	player_names = []
 	for i in range(player_count):
-		print("Enter name for player", i, ":")
+		print("Enter name for player", i+1, ":")
 		player_names.append(input())
 		print()
 
@@ -77,13 +77,16 @@ def start_game(player_count, audioDevice):
 		# Extra reverse for even number of player games
 		reverse_audio()
 
-	finalGuess = guess_round(player_names, round_counter - 1)
+	finalGuess = guess_round(player_names, round_counter - 1) #store for the recap round
+	with open('finalGuess.txt', 'w') as f: #store for recap round
+		f.write(finalGuess)
 	
 def round1(player_names):
 	prompt_player(player_names, 0)
 	print("%s enter a sentence:" %player_names[0])
-	sentence = input()
-
+	sentence = input() 
+	with open('initWord.txt', 'w') as f: #store for recap round
+		f.write(sentence)
 	print()
 
 	return sentence
@@ -129,9 +132,13 @@ def guess_round(player_names, i):
 	play_audio()
 	print("Type your answer: ")
 	sentence = input()
-
+	
 	return sentence
 
+#Function to show the proceedings of the game
+def spectate_round():
+	print("Here is the playback, hope you had fun! ") #Placeholder until I get the functionality of the method.
+	#POSSIBLY LOOP THROUGH PLAYERS AND THEIR INPUTS ONE BY ONE
 
 def prompt_player(player_names, i):
 	print("Pass the device to %s...\n" %player_names[i])
