@@ -1,12 +1,15 @@
 import pyaudio
 import wave
+from playsound import playsound
+
+
 
 FORMAT = pyaudio.paInt16
 CHANNELS = 1
 RATE = 44100
 CHUNK = 512
 RECORD_SECONDS = 3
-WAVE_OUTPUT_FILENAME = "recordedFile0" #add.wav in playback
+WAVE_OUTPUT_FILENAME = "output0" #add.wav in playback
 audio = pyaudio.PyAudio()
 FILE_NUM = 0
 
@@ -140,6 +143,24 @@ def guess_round(player_names, i):
 	
 	return sentence
 
+#Helper to play specific file at any given moment
+def give_audio(file):
+	wf = wave.open(file, 'rb')
+
+	stream = audio.open(
+	    format = audio.get_format_from_width(wf.getsampwidth()),
+	    channels = wf.getnchannels(),
+	    rate = wf.getframerate(),
+	    output = True
+	)
+
+	data = wf.readframes(CHUNK)
+	while len(data) > 0:
+	    stream.write(data)
+	    data = wf.readframes(CHUNK)
+
+	stream.close()
+
 #Function to show the proceedings of the game
 def spectate(beginning, end, player_num, players): 
 	print("\nHere is the playback, hope you had fun! ") #Placeholder until I get the functionality of the method.
@@ -158,11 +179,13 @@ def spectate(beginning, end, player_num, players):
 				if(beginning.lower() == end.lower()):
 					print("And it was indeed ' %s '. Good Job!" %beginning)
 				else:
-					print("But it really was: ' %s '!" %beginning)
+					print("But it really was: ' %s '! \n" %beginning)
 			else:
 				print("Press enter to proceed")
 				input()
 				print("%s said:" %players[i])
+				give_audio("output"+str(i)+".wav")
+
 
 	
 
