@@ -83,10 +83,12 @@ def start_game(player_count, audioDevice):
 	finalGuess = guess_round(player_names, round_counter - 1) #store for the recap round
 	with open('finalGuess.txt', 'w') as f: #store for recap round
 		f.write(finalGuess)
+
+	spectate(sentence, finalGuess, player_count, player_names)
 	
 def round1(player_names):
 	prompt_player(player_names, 0)
-	print("%s enter a sentence:" %player_names[0])
+	print("%s enter a word:" %player_names[0])
 	sentence = input() 
 	with open('initWord.txt', 'w') as f: #store for recap round
 		f.write(sentence)
@@ -96,7 +98,7 @@ def round1(player_names):
 
 def round2(sentence, player_names):
 	prompt_player(player_names, 1)
-	print("Record yourself saying this sentence.")
+	print("Record yourself saying this word.")
 	print(sentence)
 	print()
 	print("Ready to record?")
@@ -106,7 +108,7 @@ def round2(sentence, player_names):
 
 def reverse_round(player_names, i):
 	prompt_player(player_names, i)
-	print("Record yourself saying repeating the sentence you will hear.")
+	print("Record yourself saying repeating the word you will hear.")
 	ready_check(player_names, i)
 	reverse_audio()
 	play_audio()
@@ -118,18 +120,18 @@ def reverse_round(player_names, i):
 
 def interpret_round(player_names, i):
 	prompt_player(player_names, i)
-	print("Record your best guess of what the original sentence was after hearing the reversed audio.")
+	print("Record your best guess of what the original word was after hearing the reversed audio.")
 	ready_check(player_names, i)
 	reverse_audio()
 	play_audio()
 	print("Ready to record?")
-	ready_check(player_names, i)
+	ready_check(player_names, i) #check for replay option, make new ready checker for any listening calls
 	record_audio()
 	print()
 
 def guess_round(player_names, i):
 	prompt_player(player_names, i)
-	print("Type your best guess of what the original sentence was after hearing audio.")
+	print("Type your best guess of what the original word was after hearing audio.")
 	print("Ready to hear the recording?")
 	ready_check(player_names, i)
 	play_audio()
@@ -139,9 +141,38 @@ def guess_round(player_names, i):
 	return sentence
 
 #Function to show the proceedings of the game
-def spectate_round():
+def spectate(beginning, end, player_num, players): 
 	print("Here is the playback, hope you had fun! ") #Placeholder until I get the functionality of the method.
-	#POSSIBLY LOOP THROUGH PLAYERS AND THEIR INPUTS ONE BY ONE
+	#POSSIBLY LOOP THROUGH PLAYERS AND THEIR INPUTS ONE BY ONE 
+	print("Press enter to proceed")
+	input()
+	for i in range(player_num):
+		if (i==0):
+			print("%s entered:" %players[i], beginning)
+		
+		else:
+			if (i==player_num-1):
+				print("Press enter to proceed")
+				input()
+				print("%s thought the original word was: " %players[i], end)
+				print("But it really was: ' %s '!" %beginning)
+			else:
+				print("Press enter to proceed")
+				input()
+				print("%s said:" %players[i])
+
+	
+
+	'''
+	PRINT(ready?) IF ANYTHING THEN PROCEED
+	print inp sentence
+	ready check
+	player 2 said : play audio1
+	ready check
+	player 3 said : play aud2 (rev)
+	ready check
+	player 4 answered: print output sentence
+	'''
 
 def prompt_player(player_names, i):
 	print("Pass the device to %s...\n" %player_names[i])
