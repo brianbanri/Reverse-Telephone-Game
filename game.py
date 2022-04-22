@@ -1,56 +1,85 @@
 import pyaudio
 import wave
 from playsound import playsound
+import time
+import os
+import shutil
 
 
-
+# Globals Variables for Audio Setup
 FORMAT = pyaudio.paInt16
 CHANNELS = 1
 RATE = 44100
 CHUNK = 512
 RECORD_SECONDS = 3
-WAVE_OUTPUT_FILENAME = "output0" #add.wav in playback
 audio = pyaudio.PyAudio()
 FILE_NUM = 0
+promptingDelay = 1
 
+# Function that puts the players on the title screen to start or join a game
 def titleScreen():
+	clearConsole()
 
+	# UI Prompt
 	print("\nWelcome to The Reverse Telephone Game!\n")
+	time.sleep(promptingDelay)
 	print("Type \"Start Local Game\" to start a new game on this device")
 	print("Type \"Host Game\" to host a new game")
 	print("Type \"Join Game\" to join an existing game")
 
-	user_input = input()
+	# Takes user input and lets the user continue when a valid input is given
+	user_input = ""
+	while(not (user_input.lower() in ["host game", "join game", "start local game"])):
+		user_input = input()
 	print()
 
+	# Starts the program for the following selection
 	if user_input.lower() == "host game":
-		host_game(audioDevice)
+		host_game()
 	elif user_input.lower() == "join game":
-		join_game(audioDevice)
+		join_game()
 	elif user_input.lower() == "start local game":
-		start_local_game(audioDevice)
+		start_local_game()
 
-def start_local_game(audioDevice):
+def start_local_game():
+	clearConsole()
+
+	if (os.path.exists("./localGame")):
+		shutil.rmtree("./localGame", ignore_errors=False, onerror=None)
+		
+
+	os.makedirs("./localGame")
+
 	print("starting local game...\n")
+	time.sleep(promptingDelay)
 	print("Enter number of players:")
 	player_count = int(input())
 	print()
 	if(player_count < 4):
 		print("You need 4 or more players to play this game.")
-		quit() #calling the title screen here leads to an error once the main game is completed with optimum players, so I chose to quit instead.
+		time.sleep(promptingDelay)
+		print("Exiting to title screen...")
+		shutil.rmtree("./localGame", ignore_errors=False, onerror=None)
+		titleScreen()
+	else:
+		start_game(player_count)
+		shutil.rmtree("./localGame", ignore_errors=False, onerror=None)
 
-	start_game(player_count, audioDevice)
 
-def host_game(audioDevice):
+
+def host_game():
+	clearConsole()
 	print("hosting game...\n")
 
-def join_game(audioDevice):
+def join_game():
+	clearConsole()
 	print("joining game...\n")
 
-def start_game(player_count, audioDevice):
+def start_game(player_count):
 	round_counter = 0
 
 	print("Game starting with %d players...\n" %player_count)
+	time.sleep(promptingDelay)
 
 	player_names = []
 	for i in range(player_count):
@@ -83,68 +112,90 @@ def start_game(player_count, audioDevice):
 		# Extra reverse for even number of player games
 		reverse_audio()
 
-	finalGuess = guess_round(player_names, round_counter - 1) #store for the recap round
-	with open('finalGuess.txt', 'w') as f: #store for recap round
-		f.write(finalGuess)
+	final_guess = guess_round(player_names, round_counter - 1) #store for the recap round
+	with open('./localGame/final-guess.txt', 'w') as f: #store for recap round
+		f.write(final_guess)
 
-	spectate(sentence, finalGuess, player_count, player_names)
-	
+	spectate(sentence, final_guess, player_count, player_names)
+
 def round1(player_names):
+	clearConsole()
 	prompt_player(player_names, 0)
 	print("%s enter a word:" %player_names[0])
 	sentence = input() 
-	with open('initWord.txt', 'w') as f: #store for recap round
+	with open('./localGame/init-phrase.txt', 'w') as f: #store for recap round
 		f.write(sentence)
 	print()
 
 	return sentence
 
 def round2(sentence, player_names):
+	clearConsole()
 	prompt_player(player_names, 1)
 	print("Record yourself saying this word.")
+	time.sleep(promptingDelay)
 	print(sentence)
 	print()
+	time.sleep(promptingDelay)
 	print("Ready to record?")
 	ready_check(player_names, 1)
 	record_audio()
 	print()
 
+def replayAudioLoop(reverse):
+	while(input() == "replay"): 
+		play_audio(reverse)
+	print()
+
 def reverse_round(player_names, i):
+	clearConsole()
 	prompt_player(player_names, i)
 	print("Record yourself saying repeating the word you will hear.")
 	ready_check(player_names, i)
 	reverse_audio()
-	play_audio()
-	print("Ready to record? [You can enter Replay to re-hear the audio]")
-	if(replay_check() == 1): 
-		play_audio()	#CHECKING IF USER WANTS AUDIO REPLAYED
-	ready_check(player_names, i)
+	play_audio(1)
+	
+
+	print("Type 'replay' to re-hear the audio, or just press enter to start recording.")
+	replayAudioLoop(1)
+
 	record_audio()
 	print()
 	
 
 def interpret_round(player_names, i):
+	clearConsole()
 	prompt_player(player_names, i)
 	print("Record your best guess of what the original word was after hearing the reversed audio.")
 	ready_check(player_names, i)
 	reverse_audio()
-	play_audio()
-	print("Ready to record? [You can enter Replay to re-hear the audio]")
-	if(replay_check() == 1): 
-		play_audio()	#CHECKING IF USER WANTS AUDIO REPLAYED
-	ready_check(player_names, i) #check for replay option, make new ready checker for any listening calls
+	play_audio(1)
+
+
+	print("Type 'replay' to re-hear the audio, or just press enter to start recording.")
+	replayAudioLoop(1)
+
 	record_audio()
 	print()
 
 def guess_round(player_names, i):
+	clearConsole()
 	prompt_player(player_names, i)
 	print("Type your best guess of what the original word was after hearing audio.")
 	print("Ready to hear the recording?")
 	ready_check(player_names, i)
-	play_audio()
-	print("Would you like to hear it again? [Only 1 Replay Allowed]")
-	if(replay_check() == 1): 
-		play_audio()	#CHECKING IF USER WANTS AUDIO REPLAYED
+	if (len(player_names) % 2 == 0):
+		play_audio(1)
+	else:
+		play_audio(0)
+
+
+	print("Type 'replay' to re-hear the audio, or just press enter to continue.")
+	if (len(player_names) % 2 == 0):
+		replayAudioLoop(1)
+	else:
+		replayAudioLoop(0)
+
 	print("Type your answer: ")
 	sentence = input()
 	
@@ -168,41 +219,60 @@ def give_audio(file):
 
 	stream.close()
 
+def get_init_phrase():
+	f = open("./localGame/init-phrase.txt", "r")
+	phrase = f.read()
+	f.close()
+	return phrase
+
+def get_final_guess():
+	f = open("./localGame/final-guess.txt", "r")
+	phrase = f.read()
+	f.close()
+	return phrase
+
 #Function to show the proceedings of the game
 def spectate(beginning, end, player_num, players): 
-	print("\nHere is the playback, hope you had fun! ") #Placeholder until I get the functionality of the method.
+	clearConsole()
+
+	init_phrase = get_init_phrase()
+	final_guess = get_final_guess()
+
+	print("\nHere is the playback, hope you had fun! ")
 	#LOOP THROUGH PLAYERS AND THEIR INPUTS ONE BY ONE 
+
 	print("Press enter to proceed")
 	input()
+
+
 	for i in range(player_num):
 		if (i==0):
-			print("%s entered:" %players[i], beginning)
+			print("%s entered:" %players[i], init_phrase)
 		
+		elif (i != player_num-1):
+			print("Press enter to proceed")
+			input()
+			print("%s said:" %players[i])
+			give_audio("./localGame/"+str(i)+".wav")
+			if (i + 1 != player_num - 1):
+				print("Press enter to proceed")
+				input()
+				print("%s heard:" %players[i+1])
+				give_audio("./localGame/"+str(i)+"-reverse"+".wav")
 		else:
-			if (i==player_num-1):
-				print("Press enter to proceed")
-				input()
-				print("%s thought the original word was: " %players[i], end)
-				if(beginning.lower() == end.lower()):
-					print("And it was indeed ' %s '. Good Job!" %beginning)
-				else:
-					print("But it really was: ' %s '! \n" %beginning)
+			print("Press enter to proceed")
+			input()
+			print("%s thought the original word was: " %players[i], final_guess)
+			if(init_phrase.lower() == final_guess.lower()):
+				print("And it was indeed ' %s '. Good Job!" %beginning)
 			else:
-				print("Press enter to proceed")
-				input()
-				print("%s said:" %players[i])
-				give_audio("output"+str(i)+".wav")
+				print("But it really was: ' %s '! \n" %beginning)
 
 
 
 def prompt_player(player_names, i):
 	print("Pass the device to %s...\n" %player_names[i])
 	ready_check(player_names, i)
-
-def replay_check():
-	if(input()=="replay"): return 1
-	else: return 0
-
 
 def ready_check(player_names, i):
 	print("%s type \"ready\" to continue..." %player_names[i])
@@ -226,12 +296,12 @@ def record_audio():
 	stream.stop_stream()
 	stream.close()
 
-	global FILE_NUM 
+	# Makes this function recognize our global variables
+	global FILE_NUM
+
 	FILE_NUM += 1
-	global WAVE_OUTPUT_FILENAME 
-	WAVE_OUTPUT_FILENAME = WAVE_OUTPUT_FILENAME[:-1]
-	WAVE_OUTPUT_FILENAME += str(FILE_NUM)
-	waveFile = wave.open(WAVE_OUTPUT_FILENAME+".wav", 'wb')
+
+	waveFile = wave.open("./localGame/" + str(FILE_NUM)+".wav", 'wb')
 	waveFile.setnchannels(CHANNELS)
 	waveFile.setsampwidth(audio.get_sample_size(FORMAT))
 	waveFile.setframerate(RATE)
@@ -239,7 +309,7 @@ def record_audio():
 	waveFile.close()
 
 def reverse_audio():
-	wf = wave.open(WAVE_OUTPUT_FILENAME+".wav", 'rb')
+	wf = wave.open("./localGame/"+str(FILE_NUM)+".wav", 'rb')
 
 	stream = audio.open(
 	    format = audio.get_format_from_width(wf.getsampwidth()),
@@ -255,8 +325,7 @@ def reverse_audio():
 	    recording.append(data)
 
 	recording = recording[::-1]
-	print("PLAYING: ",WAVE_OUTPUT_FILENAME)
-	waveFile = wave.open(WAVE_OUTPUT_FILENAME+".wav", 'wb') #concatenate file number here
+	waveFile = wave.open("./localGame/"+str(FILE_NUM)+"-reverse"+".wav", 'wb') #concatenate file number here
 	waveFile.setnchannels(CHANNELS)
 	waveFile.setsampwidth(audio.get_sample_size(FORMAT))
 	waveFile.setframerate(RATE)
@@ -265,8 +334,11 @@ def reverse_audio():
 
 	stream.close()
 
-def play_audio():
-	wf = wave.open(WAVE_OUTPUT_FILENAME+".wav", 'rb')
+def play_audio(reverse):
+	if (reverse):
+		wf = wave.open("./localGame/"+str(FILE_NUM)+"-reverse"+".wav", 'rb')
+	else:
+		wf = wave.open("./localGame/"+str(FILE_NUM)+".wav", 'rb')
 
 	stream = audio.open(
 	    format = audio.get_format_from_width(wf.getsampwidth()),
@@ -292,17 +364,24 @@ def setupAudioDevice():
 
 	print("-------------------------------------------------------------")
 
+	print("Enter the id # of the input device for recording.")
+
 	index = int(input())
 	print("recording via index "+str(index))
 
 	return index
 
-
+def clearConsole():
+    command = 'clear'
+    if os.name in ('nt', 'dos'):  # If Machine is running on Windows, use cls
+        command = 'cls'
+    os.system(command)
 
 def main():
 	titleScreen()
 
 if __name__ == "__main__":
+	clearConsole()
 
 	audioDevice = setupAudioDevice();
 	main()
