@@ -115,7 +115,9 @@ def reverse_round(player_names, i):
 	ready_check(player_names, i)
 	reverse_audio()
 	play_audio()
-	print("Ready to record?")
+	print("Ready to record? [You can enter Replay to re-hear the audio]")
+	if(replay_check() == 1): 
+		play_audio()	#CHECKING IF USER WANTS AUDIO REPLAYED
 	ready_check(player_names, i)
 	record_audio()
 	print()
@@ -127,7 +129,9 @@ def interpret_round(player_names, i):
 	ready_check(player_names, i)
 	reverse_audio()
 	play_audio()
-	print("Ready to record?")
+	print("Ready to record? [You can enter Replay to re-hear the audio]")
+	if(replay_check() == 1): 
+		play_audio()	#CHECKING IF USER WANTS AUDIO REPLAYED
 	ready_check(player_names, i) #check for replay option, make new ready checker for any listening calls
 	record_audio()
 	print()
@@ -138,6 +142,9 @@ def guess_round(player_names, i):
 	print("Ready to hear the recording?")
 	ready_check(player_names, i)
 	play_audio()
+	print("Would you like to hear it again? [Only 1 Replay Allowed]")
+	if(replay_check() == 1): 
+		play_audio()	#CHECKING IF USER WANTS AUDIO REPLAYED
 	print("Type your answer: ")
 	sentence = input()
 	
@@ -187,22 +194,15 @@ def spectate(beginning, end, player_num, players):
 				give_audio("output"+str(i)+".wav")
 
 
-	
-
-	'''
-	PRINT(ready?) IF ANYTHING THEN PROCEED
-	print inp sentence
-	ready check
-	player 2 said : play audio1
-	ready check
-	player 3 said : play aud2 (rev)
-	ready check
-	player 4 answered: print output sentence
-	'''
 
 def prompt_player(player_names, i):
 	print("Pass the device to %s...\n" %player_names[i])
 	ready_check(player_names, i)
+
+def replay_check():
+	if(input()=="replay"): return 1
+	else: return 0
+
 
 def ready_check(player_names, i):
 	print("%s type \"ready\" to continue..." %player_names[i])
