@@ -142,8 +142,8 @@ def guess_round(player_names, i):
 
 #Function to show the proceedings of the game
 def spectate(beginning, end, player_num, players): 
-	print("Here is the playback, hope you had fun! ") #Placeholder until I get the functionality of the method.
-	#POSSIBLY LOOP THROUGH PLAYERS AND THEIR INPUTS ONE BY ONE 
+	print("\nHere is the playback, hope you had fun! ") #Placeholder until I get the functionality of the method.
+	#LOOP THROUGH PLAYERS AND THEIR INPUTS ONE BY ONE 
 	print("Press enter to proceed")
 	input()
 	for i in range(player_num):
@@ -155,7 +155,10 @@ def spectate(beginning, end, player_num, players):
 				print("Press enter to proceed")
 				input()
 				print("%s thought the original word was: " %players[i], end)
-				print("But it really was: ' %s '!" %beginning)
+				if(beginning.lower() == end.lower()):
+					print("And it was indeed ' %s '. Good Job!" %beginning)
+				else:
+					print("But it really was: ' %s '!" %beginning)
 			else:
 				print("Press enter to proceed")
 				input()
