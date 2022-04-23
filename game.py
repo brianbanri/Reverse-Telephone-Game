@@ -1,14 +1,16 @@
 import pyaudio
+
 import wave
-import time
 import os
 import shutil
+import threading
+from time import sleep
+
 import click
 from colorama import Fore, Back
 from colorama import init as colorama_init
 from art import text2art
 from tqdm import trange
-from time import sleep
 
 
 # Globals Variables for Audio Setup
@@ -29,6 +31,10 @@ Art = text2art("                                               WELCOME", font='b
 print(f"{Fore.LIGHTGREEN_EX}{Art}")
 
 
+def waitingBar(seconds):
+	for i in trange(seconds*10):
+		sleep(0.1)
+
 # Function that puts the players on the title screen to start or join a game
 def titleScreen():
 	clearConsole()
@@ -36,7 +42,7 @@ def titleScreen():
 	# UI Prompt
 	titleScreen = text2art("                       WELCOME                   TO \nREVERSE TELEPHONE GAME", font='big')
 	print(f"{Fore.LIGHTGREEN_EX}{titleScreen}")
-	time.sleep(promptingDelay)
+	sleep(promptingDelay)
 	print(Fore.LIGHTRED_EX + "Type \"Start Local Game\" to start a new game on this device")
 	print(Fore.LIGHTRED_EX + "Type \"Host Game\" to host a new game")
 	print(Fore.LIGHTRED_EX + "Type \"Join Game\" to join an existing game")
@@ -55,9 +61,6 @@ def titleScreen():
 	elif user_input.lower() == "start local game":
 		start_local_game()
 
-def waitingBar():
-    sleep(0.1)
-
 def start_local_game():
 	clearConsole()
 
@@ -68,16 +71,17 @@ def start_local_game():
 	os.makedirs("./localGame")
 
 	print(Fore.LIGHTRED_EX + "Starting Local Game...\n")
-	for i in trange(10):
-		waitingBar()
-	time.sleep(promptingDelay)
+
+	waitingBar(1)
+
+	sleep(promptingDelay)
 	print()
 	print(Fore.LIGHTRED_EX + "Enter number of players:")
 	player_count = int(input())
 	print()
 	if(player_count < 4):
 		print(Fore.LIGHTRED_EX +"You need 4 or more players to play this game.")
-		time.sleep(promptingDelay)
+		sleep(promptingDelay)
 		print(Fore.LIGHTRED_EX +"Exiting to title screen...")
 		shutil.rmtree("./localGame", ignore_errors=False, onerror=None)
 		titleScreen()
@@ -99,7 +103,7 @@ def start_game(player_count):
 	round_counter = 0
 
 	print(Fore.LIGHTRED_EX + "Game starting with %d players...\n" %player_count)
-	time.sleep(promptingDelay)
+	sleep(promptingDelay)
 
 	player_names = []
 	for i in range(player_count):
@@ -109,12 +113,12 @@ def start_game(player_count):
 
 	#Start Round 1
 	round_counter += 1
-	sentence = round1(player_names)
+	round1(player_names)
 	#End Round 1
 
 	#Start Round 2
 	round_counter += 1
-	audio = round2(sentence, player_names)
+	round2(player_names)
 	#End Round 2
 
 	#Start Round 3
@@ -122,9 +126,9 @@ def start_game(player_count):
 	round_counter += 1
 	while round_counter < player_count:
 		if round_counter % 2 == 1:
-			audio = reverse_round(player_names, round_counter - 1)
+			reverse_round(player_names, round_counter - 1)
 		else:
-			audio = interpret_round(player_names, round_counter - 1)
+			interpret_round(player_names, round_counter - 1)
 		round_counter += 1
 
 	#Start Round player_count
@@ -136,7 +140,7 @@ def start_game(player_count):
 	with open('./localGame/final-guess.txt', 'w') as f: #store for recap round
 		f.write(final_guess)
 
-	spectate(sentence, final_guess, player_count, player_names)
+	spectate(player_count, player_names)
 
 def round1(player_names):
 	clearConsole()
@@ -149,14 +153,14 @@ def round1(player_names):
 
 	return sentence
 
-def round2(sentence, player_names):
+def round2(player_names):
 	clearConsole()
 	prompt_player(player_names, 1)
 	print(Fore.LIGHTRED_EX + "Record yourself saying this word.")
-	time.sleep(promptingDelay)
-	print(sentence)
+	sleep(promptingDelay)
+	print(get_init_phrase())
 	print()
-	time.sleep(promptingDelay)
+	sleep(promptingDelay)
 	print(Fore.LIGHTRED_EX +"Ready to record?")
 	ready_check(player_names, 1)
 	record_audio()
@@ -252,7 +256,7 @@ def get_final_guess():
 	return phrase
 
 #Function to show the proceedings of the game
-def spectate(beginning, end, player_num, players): 
+def spectate(player_num, players): 
 	clearConsole()
 
 	init_phrase = get_init_phrase()
@@ -284,9 +288,9 @@ def spectate(beginning, end, player_num, players):
 			input()
 			print("%s thought the original word was: " %players[i], final_guess)
 			if(init_phrase.lower() == final_guess.lower()):
-				print("And it was indeed ' %s '. Good Job!" %beginning)
+				print("And it was indeed ' %s '. Good Job!" %init_phrase)
 			else:
-				print("But it really was: ' %s '! \n" %beginning)
+				print("But it really was: ' %s '! \n" %init_phrase)
 
 
 
@@ -310,7 +314,10 @@ def record_audio():
                 frames_per_buffer=CHUNK)
 	print (Fore.LIGHTRED_EX + "recording started")
 	Recordframes = []
-	 
+	
+
+	timer_recording = threading.Thread(target=waitingBar, args=(2,), daemon=True)
+	timer_recording.start()
 	for i in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
 	    data = stream.read(CHUNK)
 	    Recordframes.append(data)
@@ -405,5 +412,3 @@ if __name__ == "__main__":
 
 	audioDevice = setupAudioDevice();
 	main()
-
-#test
