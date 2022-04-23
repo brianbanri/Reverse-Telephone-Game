@@ -79,7 +79,7 @@ def start_game(player_count, audioDevice):
 
 	player_names = []
 	for i in range(player_count):
-		print("Enter name for player", i+1, ":")
+		print(Fore.LIGHTRED_EX + "Enter name for player", i+1, ":")
 		player_names.append(input())
 		print()
 
@@ -114,7 +114,7 @@ def start_game(player_count, audioDevice):
 	
 def round1(player_names):
 	prompt_player(player_names, 0)
-	print("%s enter a sentence:" %player_names[0])
+	print(Fore.LIGHTRED_EX + "%s enter a sentence:" %player_names[0])
 	sentence = input() 
 	with open('initWord.txt', 'w') as f: #store for recap round
 		f.write(sentence)
@@ -124,21 +124,22 @@ def round1(player_names):
 
 def round2(sentence, player_names):
 	prompt_player(player_names, 1)
-	print("Record yourself saying this sentence.")
-	print(sentence)
+	print(Fore.LIGHTRED_EX + "Record yourself saying this sentence (in green).\n")
+	print(Fore.LIGHTGREEN_EX + sentence)
+	sleep(5)
 	print()
-	print("Ready to record?")
+	print(Fore.LIGHTRED_EX + "Ready to record?")
 	ready_check(player_names, 1)
 	record_audio()
 	print()
 
 def reverse_round(player_names, i):
 	prompt_player(player_names, i)
-	print("Record yourself saying repeating the sentence you will hear.")
+	print(Fore.LIGHTRED_EX + "Record yourself saying repeating the sentence you will hear.")
 	ready_check(player_names, i)
 	reverse_audio()
 	play_audio()
-	print("Ready to record?")
+	print(Fore.LIGHTRED_EX + "Ready to record?")
 	ready_check(player_names, i)
 	record_audio()
 	print()
@@ -146,37 +147,40 @@ def reverse_round(player_names, i):
 
 def interpret_round(player_names, i):
 	prompt_player(player_names, i)
-	print("Record your best guess of what the original sentence was after hearing the reversed audio.")
+	print(Fore.LIGHTRED_EX + "Record your best guess of what the original sentence was after hearing the reversed audio.")
 	ready_check(player_names, i)
 	reverse_audio()
 	play_audio()
-	print("Ready to record?")
+	print(Fore.LIGHTRED_EX + "Ready to record?")
 	ready_check(player_names, i)
 	record_audio()
 	print()
 
 def guess_round(player_names, i):
 	prompt_player(player_names, i)
-	print("Type your best guess of what the original sentence was after hearing audio.")
-	print("Ready to hear the recording?")
+	print(Fore.LIGHTRED_EX + "Type your best guess of what the original sentence was after hearing audio.")
+	print(Fore.LIGHTRED_EX + "Ready to hear the recording?")
 	ready_check(player_names, i)
 	play_audio()
-	print("Type your answer: ")
+	print(Fore.LIGHTRED_EX + "Type your answer: ")
 	sentence = input()
 	
 	return sentence
 
 #Function to show the proceedings of the game
 def spectate_round():
-	print("Here is the playback, hope you had fun! ") #Placeholder until I get the functionality of the method.
+	print(Fore.LIGHTRED_EX + "Here is the playback, hope you had fun! ") #Placeholder until I get the functionality of the method.
 	#POSSIBLY LOOP THROUGH PLAYERS AND THEIR INPUTS ONE BY ONE
 
 def prompt_player(player_names, i):
-	print("Pass the device to %s...\n" %player_names[i])
+	click.clear()
+	prompt_player_text = text2art(player_names[i], font='small')
+	print(f"{Fore.LIGHTGREEN_EX}{prompt_player_text}")
+	print(Fore.LIGHTRED_EX + "Pass the device to %s...\n" %player_names[i])
 	ready_check(player_names, i)
 
 def ready_check(player_names, i):
-	print("%s type \"ready\" to continue..." %player_names[i])
+	print(Fore.LIGHTRED_EX + "%s type \"ready\" to continue..." %player_names[i])
 	while(input() != "ready"):
 		pass
 	print()
@@ -226,7 +230,8 @@ def reverse_audio():
 	    recording.append(data)
 
 	recording = recording[::-1]
-	print("PLAYING: ",WAVE_OUTPUT_FILENAME)
+	print(Fore.LIGHTGREEN_EX + "PLAYING: ",WAVE_OUTPUT_FILENAME)
+	print()
 	waveFile = wave.open(WAVE_OUTPUT_FILENAME+".wav", 'wb') #concatenate file number here
 	waveFile.setnchannels(CHANNELS)
 	waveFile.setsampwidth(audio.get_sample_size(FORMAT))
@@ -263,7 +268,7 @@ def setupAudioDevice():
 
 	print("\t\t\t\t\t\t----------------------------------------------------------------")
 
-	index = click.prompt(Fore.LIGHTRED_EX + 'Choose your audio device\n', type=int)
+	index = click.prompt(Fore.LIGHTRED_EX + 'Choose your audio device', type=int)
 	print("recording via index "+str(index))
 	click.clear()
 	return index
