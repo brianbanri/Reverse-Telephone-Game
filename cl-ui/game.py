@@ -126,7 +126,6 @@ def round2(sentence, player_names):
 	prompt_player(player_names, 1)
 	print(Fore.LIGHTRED_EX + "Record yourself saying this sentence (in green).\n")
 	print(Fore.LIGHTGREEN_EX + sentence)
-	sleep(5)
 	print()
 	print(Fore.LIGHTRED_EX + "Ready to record?")
 	ready_check(player_names, 1)
