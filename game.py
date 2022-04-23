@@ -21,16 +21,25 @@ audio = pyaudio.PyAudio()
 FILE_NUM = 0
 promptingDelay = 1
 
+#Beginning of CLUI
+os.system('mode con: cols=170 lines=40')
+click.clear()
+colorama_init(autoreset=True)
+Art = text2art("                                               WELCOME", font='big')
+print(f"{Fore.LIGHTGREEN_EX}{Art}")
+
+
 # Function that puts the players on the title screen to start or join a game
 def titleScreen():
 	clearConsole()
 
 	# UI Prompt
-	print("\nWelcome to The Reverse Telephone Game!\n")
+	titleScreen = text2art("                       WELCOME                   TO \nREVERSE TELEPHONE GAME", font='big')
+	print(f"{Fore.LIGHTGREEN_EX}{titleScreen}")
 	time.sleep(promptingDelay)
-	print("Type \"Start Local Game\" to start a new game on this device")
-	print("Type \"Host Game\" to host a new game")
-	print("Type \"Join Game\" to join an existing game")
+	print(Fore.LIGHTRED_EX + "Type \"Start Local Game\" to start a new game on this device")
+	print(Fore.LIGHTRED_EX + "Type \"Host Game\" to host a new game")
+	print(Fore.LIGHTRED_EX + "Type \"Join Game\" to join an existing game")
 
 	# Takes user input and lets the user continue when a valid input is given
 	user_input = ""
@@ -55,15 +64,15 @@ def start_local_game():
 
 	os.makedirs("./localGame")
 
-	print("starting local game...\n")
+	print(Fore.LIGHTRED_EX + "Starting Local Game...\n")
 	time.sleep(promptingDelay)
-	print("Enter number of players:")
+	print(Fore.LIGHTRED_EX + "Enter number of players:")
 	player_count = int(input())
 	print()
 	if(player_count < 4):
-		print("You need 4 or more players to play this game.")
+		print(Fore.LIGHTRED_EX +"You need 4 or more players to play this game.")
 		time.sleep(promptingDelay)
-		print("Exiting to title screen...")
+		print(Fore.LIGHTRED_EX +"Exiting to title screen...")
 		shutil.rmtree("./localGame", ignore_errors=False, onerror=None)
 		titleScreen()
 	else:
@@ -83,12 +92,12 @@ def join_game():
 def start_game(player_count):
 	round_counter = 0
 
-	print("Game starting with %d players...\n" %player_count)
+	print(Fore.LIGHTRED_EX + "Game starting with %d players...\n" %player_count)
 	time.sleep(promptingDelay)
 
 	player_names = []
 	for i in range(player_count):
-		print("Enter name for player", i+1, ":")
+		print(Fore.LIGHTRED_EX + "Enter name for player", i+1, ":")
 		player_names.append(input())
 		print()
 
@@ -126,7 +135,7 @@ def start_game(player_count):
 def round1(player_names):
 	clearConsole()
 	prompt_player(player_names, 0)
-	print("%s enter a word:" %player_names[0])
+	print(Fore.LIGHTRED_EX +"%s enter a word:" %player_names[0])
 	sentence = input() 
 	with open('./localGame/init-phrase.txt', 'w') as f: #store for recap round
 		f.write(sentence)
@@ -137,12 +146,12 @@ def round1(player_names):
 def round2(sentence, player_names):
 	clearConsole()
 	prompt_player(player_names, 1)
-	print("Record yourself saying this word.")
+	print(Fore.LIGHTRED_EX + "Record yourself saying this word.")
 	time.sleep(promptingDelay)
 	print(sentence)
 	print()
 	time.sleep(promptingDelay)
-	print("Ready to record?")
+	print(Fore.LIGHTRED_EX +"Ready to record?")
 	ready_check(player_names, 1)
 	record_audio()
 	print()
@@ -155,13 +164,13 @@ def replayAudioLoop(reverse):
 def reverse_round(player_names, i):
 	clearConsole()
 	prompt_player(player_names, i)
-	print("Record yourself saying repeating the word you will hear.")
+	print(Fore.LIGHTRED_EX +"Record yourself saying repeating the word you will hear.")
 	ready_check(player_names, i)
 	reverse_audio()
 	play_audio(1)
 	
 
-	print("Type 'replay' to re-hear the audio, or just press enter to start recording.")
+	print(Fore.LIGHTRED_EX +"Type 'replay' to re-hear the audio, or just press enter to start recording.")
 	replayAudioLoop(1)
 
 	record_audio()
@@ -171,13 +180,13 @@ def reverse_round(player_names, i):
 def interpret_round(player_names, i):
 	clearConsole()
 	prompt_player(player_names, i)
-	print("Record your best guess of what the original word was after hearing the reversed audio.")
+	print(Fore.LIGHTRED_EX +"Record your best guess of what the original word was after hearing the reversed audio.")
 	ready_check(player_names, i)
 	reverse_audio()
 	play_audio(1)
 
 
-	print("Type 'replay' to re-hear the audio, or just press enter to start recording.")
+	print(Fore.LIGHTRED_EX +"Type 'replay' to re-hear the audio, or just press enter to start recording.")
 	replayAudioLoop(1)
 
 	record_audio()
@@ -186,8 +195,8 @@ def interpret_round(player_names, i):
 def guess_round(player_names, i):
 	clearConsole()
 	prompt_player(player_names, i)
-	print("Type your best guess of what the original word was after hearing audio.")
-	print("Ready to hear the recording?")
+	print(Fore.LIGHTRED_EX +"Type your best guess of what the original word was after hearing audio.")
+	print(Fore.LIGHTRED_EX +"Ready to hear the recording?")
 	ready_check(player_names, i)
 	if (len(player_names) % 2 == 0):
 		play_audio(1)
@@ -195,13 +204,13 @@ def guess_round(player_names, i):
 		play_audio(0)
 
 
-	print("Type 'replay' to re-hear the audio, or just press enter to continue.")
+	print(Fore.LIGHTRED_EX +"Type 'replay' to re-hear the audio, or just press enter to continue.")
 	if (len(player_names) % 2 == 0):
 		replayAudioLoop(1)
 	else:
 		replayAudioLoop(0)
 
-	print("Type your answer: ")
+	print(Fore.LIGHTRED_EX +"Type your answer: ")
 	sentence = input()
 	
 	return sentence
@@ -276,11 +285,14 @@ def spectate(beginning, end, player_num, players):
 
 
 def prompt_player(player_names, i):
-	print("Pass the device to %s...\n" %player_names[i])
+	click.clear()
+	prompt_player_text = text2art(player_names[i], font='small')
+	print(f"{Fore.LIGHTGREEN_EX}{prompt_player_text}")
+	print(Fore.LIGHTRED_EX + "Pass the device to %s...\n" %player_names[i])
 	ready_check(player_names, i)
 
 def ready_check(player_names, i):
-	print("%s type \"ready\" to continue..." %player_names[i])
+	print(Fore.LIGHTRED_EX + "%s type \"ready\" to continue..." %player_names[i])
 	while(input() != "ready"):
 		pass
 	print()
@@ -360,20 +372,18 @@ def play_audio(reverse):
 	stream.close()
 
 def setupAudioDevice():
-	print("----------------------record device list---------------------")
+	print("\t\t\t\t\t\t----------------------RECORDING DEVICE LIST---------------------")
 	info = audio.get_host_api_info_by_index(0)
 	numdevices = info.get('deviceCount')
 	for i in range(0, numdevices):
 	        if (audio.get_device_info_by_host_api_device_index(0, i).get('maxInputChannels')) > 0:
-	            print("Input Device id ", i, " - ", audio.get_device_info_by_host_api_device_index(0, i).get('name'))
+	            print("\t\t\t\t\t\tInput Device id ", i, " - ", audio.get_device_info_by_host_api_device_index(0, i).get('name'))
 
-	print("-------------------------------------------------------------")
+	print("\t\t\t\t\t\t----------------------------------------------------------------")
 
-	print("Enter the id # of the input device for recording.")
-
-	index = int(input())
+	index = click.prompt(Fore.LIGHTRED_EX + 'Choose your audio device', type=int)
 	print("recording via index "+str(index))
-
+	click.clear()
 	return index
 
 def clearConsole():
@@ -386,8 +396,7 @@ def main():
 	titleScreen()
 
 if __name__ == "__main__":
-	clearConsole()
-
+	
 	audioDevice = setupAudioDevice();
 	main()
 
