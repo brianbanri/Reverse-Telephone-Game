@@ -55,6 +55,9 @@ def titleScreen():
 	elif user_input.lower() == "start local game":
 		start_local_game()
 
+def waitingBar():
+    sleep(0.1)
+
 def start_local_game():
 	clearConsole()
 
@@ -65,7 +68,10 @@ def start_local_game():
 	os.makedirs("./localGame")
 
 	print(Fore.LIGHTRED_EX + "Starting Local Game...\n")
+	for i in trange(10):
+		waitingBar()
 	time.sleep(promptingDelay)
+	print()
 	print(Fore.LIGHTRED_EX + "Enter number of players:")
 	player_count = int(input())
 	print()
@@ -302,13 +308,13 @@ def record_audio():
 	stream = audio.open(format=FORMAT, channels=CHANNELS,
                 rate=RATE, input=True,input_device_index = audioDevice,
                 frames_per_buffer=CHUNK)
-	print ("recording started")
+	print (Fore.LIGHTRED_EX + "recording started")
 	Recordframes = []
 	 
 	for i in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
 	    data = stream.read(CHUNK)
 	    Recordframes.append(data)
-	print ("recording stopped")
+	print (Fore.LIGHTRED_EX + "recording stopped")
 	 
 	stream.stop_stream()
 	stream.close()
@@ -396,7 +402,7 @@ def main():
 	titleScreen()
 
 if __name__ == "__main__":
-	
+
 	audioDevice = setupAudioDevice();
 	main()
 
