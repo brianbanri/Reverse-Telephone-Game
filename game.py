@@ -55,6 +55,9 @@ def titleScreen():
 	elif user_input.lower() == "start local game":
 		start_local_game()
 
+def waitingBar():
+    sleep(0.1)
+
 def start_local_game():
 	clearConsole()
 
@@ -65,7 +68,10 @@ def start_local_game():
 	os.makedirs("./localGame")
 
 	print(Fore.LIGHTRED_EX + "Starting Local Game...\n")
+	for i in trange(10):
+		waitingBar()
 	time.sleep(promptingDelay)
+	print()
 	print(Fore.LIGHTRED_EX + "Enter number of players:")
 	player_count = int(input())
 	print()
