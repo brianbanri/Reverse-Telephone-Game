@@ -302,13 +302,13 @@ def record_audio():
 	stream = audio.open(format=FORMAT, channels=CHANNELS,
                 rate=RATE, input=True,input_device_index = audioDevice,
                 frames_per_buffer=CHUNK)
-	print ("recording started")
+	print (Fore.LIGHTRED_EX + "recording started")
 	Recordframes = []
 	 
 	for i in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
 	    data = stream.read(CHUNK)
 	    Recordframes.append(data)
-	print ("recording stopped")
+	print (Fore.LIGHTRED_EX + "recording stopped")
 	 
 	stream.stop_stream()
 	stream.close()
@@ -396,7 +396,7 @@ def main():
 	titleScreen()
 
 if __name__ == "__main__":
-	
+
 	audioDevice = setupAudioDevice();
 	main()
 
