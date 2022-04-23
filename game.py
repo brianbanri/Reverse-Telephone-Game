@@ -1,6 +1,5 @@
 import pyaudio
 import wave
-from playsound import playsound
 import time
 import os
 import shutil
