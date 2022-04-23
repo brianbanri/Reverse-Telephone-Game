@@ -4,7 +4,12 @@ import wave
 import os
 import shutil
 import threading
+import multiprocessing
 from time import sleep
+
+import Pyro4
+import Pyro4.naming
+import socket
 
 import click
 from colorama import Fore, Back
@@ -23,12 +28,42 @@ audio = pyaudio.PyAudio()
 FILE_NUM = 0
 promptingDelay = 1
 
+# Global Players List for the Server Thread
+players = []
+
 #Beginning of CLUI
 os.system('mode con: cols=170 lines=40')
 click.clear()
 colorama_init(autoreset=True)
 Art = text2art("                                               WELCOME", font='big')
 print(f"{Fore.LIGHTGREEN_EX}{Art}")
+
+class Player:
+  def __init__(self, name, id):
+    self.name = name
+    self.id = id
+
+@Pyro4.expose
+class ServerHost(object):
+    def register(self, player_name):
+    	players.append(player_name)
+    	return players.index(player_name)
+
+    def getPlayerList(self):
+    	return players
+
+
+def start_name_server():
+    Pyro4.naming.startNSloop(host="0.0.0.0")
+
+def start_server_host():
+	daemon = Pyro4.Daemon(host=socket.gethostbyname(socket.gethostname()))                # make a Pyro daemon
+	ns = Pyro4.locateNS()                  # find the name server
+	uri = daemon.register(ServerHost)   # register the greeting maker as a Pyro object
+	ns.register("reversetelephone.serverhost", uri)   # register the object with a name in the name server
+
+	print("Ready.")
+	daemon.requestLoop()                   # start the event loop of the server to wait for calls
 
 
 def waitingBar(seconds):
@@ -89,15 +124,85 @@ def start_local_game():
 		start_game(player_count)
 		shutil.rmtree("./localGame", ignore_errors=False, onerror=None)
 
-
+def createGameDirectories(player_count):
+	for i in range(player_count):
+		os.makedirs("./hostedGame/game%d" %i)
 
 def host_game():
 	clearConsole()
-	print("hosting game...\n")
+
+	if (os.path.exists("./hostedGame")):
+		shutil.rmtree("./hostedGame", ignore_errors=False, onerror=None)
+		
+
+	os.makedirs("./hostedGame")
+
+	print(Fore.LIGHTRED_EX + "Start Hosting Game...\n")
+
+	waitingBar(1)
+
+	sleep(promptingDelay)
+	print()
+	print(Fore.LIGHTRED_EX + "Enter your name:")
+	player_name = input()
+	print()
+
+	# Start Pyro NameServer
+	name_server_thread = threading.Thread(target=start_name_server, daemon=True)
+	name_server_thread.start()
+
+	# Give time for the nameserver to start
+	sleep(3)
+
+	# Start Pyro ServerHost
+	server_host_thread = threading.Thread(target=start_server_host, daemon=True)
+	server_host_thread.start()
+
+	# Give time for the server host to start
+	sleep(5)
+
+	game_lobby(player_name)
+	
+	#clean up previous game files
+	shutil.rmtree("./hostedGame", ignore_errors=False, onerror=None)
+
 
 def join_game():
 	clearConsole()
-	print("joining game...\n")
+
+	print(Fore.LIGHTRED_EX + "Joining Game...\n")
+
+	waitingBar(1)
+
+	sleep(promptingDelay)
+	print()
+	print(Fore.LIGHTRED_EX + "Enter your name:")
+	player_name = input()
+	print()
+
+	game_lobby(player_name)
+
+def print_player_list(players):
+	clearConsole()
+	print("Players:\n")
+	for i in range(len(players)):
+		print(i, players[i])
+
+
+def game_lobby(player_name):
+	
+	serverhost = Pyro4.Proxy("PYRONAME:reversetelephone.serverhost")    # use name server object lookup uri shortcut
+	playerInfo = Player(player_name, serverhost.register(player_name))
+
+	print_player_list(serverhost.getPlayerList())
+
+	print("\n\nType 'start game' to start the game (4+ players required) or press enter to refresh the player list.")
+	user_input = ""
+	while(user_input != "start game"):
+		print_player_list(serverhost.getPlayerList())
+		print("\n\nType 'refresh' to refresh players or type 'start game' to start the game (4+ players required).")
+		user_input = input().lower()
+
 
 def start_game(player_count):
 	round_counter = 0
