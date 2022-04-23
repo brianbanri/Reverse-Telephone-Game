@@ -3,6 +3,12 @@ import wave
 import time
 import os
 import shutil
+import click
+from colorama import Fore, Back
+from colorama import init as colorama_init
+from art import text2art
+from tqdm import trange
+from time import sleep
 
 
 # Globals Variables for Audio Setup
