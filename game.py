@@ -1,5 +1,21 @@
 import pyaudio
+import click
 import wave
+from colorama import Fore, Back
+from colorama import init as colorama_init
+from art import text2art
+import os
+from tqdm import trange
+from time import sleep
+
+os.system('mode con: cols=170 lines=40')
+click.clear()
+colorama_init(autoreset=True)
+Art = text2art("                                               WELCOME", font='big')
+print(f"{Fore.LIGHTGREEN_EX}{Art}")
+
+def waitingBar():
+    sleep(0.1)
 
 FORMAT = pyaudio.paInt16
 CHANNELS = 1
@@ -11,11 +27,15 @@ audio = pyaudio.PyAudio()
 FILE_NUM = 0
 
 def titleScreen():
+	titleScreen = text2art("                       WELCOME                   TO \nREVERSE TELEPHONE GAME", font='big')
+	print(f"{Fore.LIGHTGREEN_EX}{titleScreen}")
+	start_local = "Type \"Start Local Game\" to start a new game on this device"
+	host_game_text = "Type \"Host Game\" to host a new game"
+	join_game_text = "Type \"Join Game\" to join an existing game"
+	print(f"{Fore.LIGHTRED_EX}{start_local}")
+	print(f"{Fore.LIGHTRED_EX}{host_game_text}")
+	print(f"{Fore.LIGHTRED_EX}{join_game_text}")
 
-	print("\nWelcome to The Reverse Telephone Game!\n")
-	print("Type \"Start Local Game\" to start a new game on this device")
-	print("Type \"Host Game\" to host a new game")
-	print("Type \"Join Game\" to join an existing game")
 
 	user_input = input()
 	print()
@@ -28,12 +48,17 @@ def titleScreen():
 		start_local_game(audioDevice)
 
 def start_local_game(audioDevice):
-	print("starting local game...\n")
-	print("Enter number of players:")
+	text_1 = "Starting Local Game...\n"
+	print(f"{Fore.LIGHTRED_EX}{text_1}")
+	for i in trange(10):
+		waitingBar()
+	text_2 = "\nEnter number of players: (4 MINIMUM)"
+	print(f"{Fore.LIGHTRED_EX}{text_2}")
 	player_count = int(input())
 	print()
 	if(player_count < 4):
-		print("You need 4 or more players to play this game.")
+		text_3 = "You need 4 or more players to play this game."
+		print(f"{Fore.LIGHTRED_EX}{text_3}")
 		quit() #calling the title screen here leads to an error once the main game is completed with optimum players, so I chose to quit instead.
 
 	start_game(player_count, audioDevice)
@@ -45,9 +70,12 @@ def join_game(audioDevice):
 	print("joining game...\n")
 
 def start_game(player_count, audioDevice):
+	click.clear()
 	round_counter = 0
+	setup_phase = text2art("SETUP", font='small')
+	print(f"{Fore.LIGHTGREEN_EX}{setup_phase}")
 
-	print("Game starting with %d players...\n" %player_count)
+	print(Fore.LIGHTRED_EX + "Game starting with %d players...\n" %player_count)
 
 	player_names = []
 	for i in range(player_count):
@@ -226,18 +254,18 @@ def play_audio():
 	stream.close()
 
 def setupAudioDevice():
-	print("----------------------record device list---------------------")
+	print("\t\t\t\t\t\t----------------------RECORDING DEVICE LIST---------------------")
 	info = audio.get_host_api_info_by_index(0)
 	numdevices = info.get('deviceCount')
 	for i in range(0, numdevices):
 	        if (audio.get_device_info_by_host_api_device_index(0, i).get('maxInputChannels')) > 0:
-	            print("Input Device id ", i, " - ", audio.get_device_info_by_host_api_device_index(0, i).get('name'))
+	            print("\t\t\t\t\t\tInput Device id ", i, " - ", audio.get_device_info_by_host_api_device_index(0, i).get('name'))
 
-	print("-------------------------------------------------------------")
+	print("\t\t\t\t\t\t----------------------------------------------------------------")
 
-	index = int(input())
+	index = click.prompt(Fore.LIGHTRED_EX + 'Choose your audio device\n', type=int)
 	print("recording via index "+str(index))
-
+	click.clear()
 	return index
 
 
