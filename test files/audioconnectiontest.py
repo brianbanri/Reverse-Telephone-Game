@@ -3,8 +3,13 @@ import pyaudio
 import wave
 
 import Pyro4
+import Pyro4.naming
+
 import os
 import socket
+import threading
+import time
+import subprocess
 
 import binascii
 
@@ -38,6 +43,13 @@ class ServerHost(object):
 
         return str_data
 
+def start_name_server():
+    Pyro4.naming.startNSloop(host="0.0.0.0")
+
+name_server_thread = threading.Thread(target=start_name_server, daemon=True)
+name_server_thread.start()
+
+time.sleep(5)
 
 daemon = Pyro4.Daemon(host=socket.gethostbyname(socket.gethostname()))                # make a Pyro daemon
 ns = Pyro4.locateNS()                  # find the name server
