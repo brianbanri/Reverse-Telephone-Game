@@ -1,0 +1,8 @@
+Pyro4==4.82
+serpent==1.40
+playsound==1.2.2
+PyAudio-0.2.11-cp38-cp38-win_amd64.whl
+art==5.6
+click==8.1.2
+colorama==0.4.4
+tqdm==4.64.0
