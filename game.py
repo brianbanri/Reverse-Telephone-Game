@@ -237,7 +237,7 @@ def multidevice_round1(playerInfo):
 	clearConsole()
 	print(Fore.LIGHTRED_EX +"%s enter a word:" %playerInfo.name)
 	phrase = input()
-	writeInitPhrase(phrase, playerInfo)
+	serverhost.writeInitPhrase(phrase, playerInfo)
 
 
 
