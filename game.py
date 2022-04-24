@@ -60,8 +60,8 @@ class ServerHost(object):
     def ready(self):
     	return game_start
 
-    def writeInitPhrase(self, phrase, playerInfo):
-    	fp = open('./hostedGame/game'+playerInfo.id+'init-phrase.txt' 'w')
+    def writeInitPhrase(self, phrase, playerID):
+    	fp = open('./hostedGame/game'+playerID+'init-phrase.txt' 'w')
     	fp.write(phrase)
     	fp.close()
 
@@ -237,7 +237,7 @@ def multidevice_round1(playerInfo, serverhost):
 	clearConsole()
 	print(Fore.LIGHTRED_EX +"%s enter a word:" %playerInfo.name)
 	phrase = input()
-	serverhost.writeInitPhrase(phrase, playerInfo)
+	serverhost.writeInitPhrase(phrase, playerInfo.id)
 
 
 
