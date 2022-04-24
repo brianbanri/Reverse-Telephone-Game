@@ -32,7 +32,6 @@ promptingDelay = 1
 players = []
 game_start = 0
 
-
 #Beginning of CLUI
 os.system('mode con: cols=170 lines=40')
 click.clear()
@@ -55,13 +54,14 @@ class ServerHost(object):
     	return players
 
     def startGame(self):
+    	global game_start
     	game_start = 1
 
     def ready(self):
     	return game_start
 
     def writeInitPhrase(self, phrase, playerID):
-    	fp = open('./hostedGame/game'+playerID+'init-phrase.txt' 'w')
+    	fp = open('./hostedGame/game'+str(playerID)+'/init-phrase.txt', 'w')
     	fp.write(phrase)
     	fp.close()
 
@@ -220,8 +220,9 @@ def game_lobby(player_name):
 	else:
 		print("\n\nType 'ready' when host starts game (4+ players required) or press enter to refresh the player list.")
 		user_input = ""
-		while(user_input != "ready" and serverhost.ready() != 1):
+		while(user_input != "ready" or serverhost.ready() != 1):
 			print_player_list(serverhost.getPlayerList())
+			print(serverhost.ready())
 			if(serverhost.ready() != 1):
 				print("Host is not ready.")
 			print("\n\nType 'ready' when host starts game (4+ players required) or press enter to refresh the player list.")
