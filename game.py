@@ -95,6 +95,29 @@ class ServerHost(object):
     	waveFile.writeframes(audioStr)
     	waveFile.close()
 
+    	wf = wave.open('./hostedGame/game'+str(playerID)+'/'+str(roundNumber)+'.wav', 'rb')
+
+    	stream = audio.open(
+    		format = audio.get_format_from_width(wf.getsampwidth()),
+    		channels = wf.getnchannels(),
+    		rate = wf.getframerate(),
+    		output = True
+    	)
+
+    	recording = []
+    	data = wf.readframes(CHUNK)
+    	while len(data) > 0:
+    		data = wf.readframes(CHUNK)
+    		recording.append(data)
+    	wf.close()
+    	recording = recording[::-1]
+    	waveFile = wave.open('./hostedGame/game'+str(playerID)+'/'+str(roundNumber)+'-reverse'+'.wav', 'wb')
+    	waveFile.setnchannels(CHANNELS)
+    	waveFile.setsampwidth(audio.get_sample_size(FORMAT))
+    	waveFile.setframerate(RATE)
+    	waveFile.writeframes(b''.join(recording))
+    	waveFile.close()
+    	stream.close()
 
 def start_name_server():
     Pyro4.naming.startNSloop(host="0.0.0.0")
@@ -483,6 +506,7 @@ def give_audio(file):
 	while len(data) > 0:
 	    stream.write(data)
 	    data = wf.readframes(CHUNK)
+	wf.close()
 
 	stream.close()
 
@@ -622,6 +646,7 @@ def reverse_audio():
 	while len(data) > 0:
 	    data = wf.readframes(CHUNK)
 	    recording.append(data)
+	wf.close()
 
 	recording = recording[::-1]
 	waveFile = wave.open("./localGame/"+str(FILE_NUM)+"-reverse"+".wav", 'wb') #concatenate file number here
@@ -650,7 +675,8 @@ def play_audio(reverse):
 	while len(data) > 0:
 	    stream.write(data)
 	    data = wf.readframes(CHUNK)
-
+	
+	wf.close()
 	stream.close()
 
 def setupAudioDevice():
