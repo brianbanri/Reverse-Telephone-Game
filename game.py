@@ -60,6 +60,11 @@ class ServerHost(object):
     def ready(self):
     	return game_start
 
+    def write(self, phrase, playerInfo):
+    	fp = open('./hostedGame/game'+playerInfo.id+'init-phrase.txt' 'w')
+    	fp.write(phrase)
+    	fp.close()
+
 
 def start_name_server():
     Pyro4.naming.startNSloop(host="0.0.0.0")
@@ -133,7 +138,7 @@ def start_local_game():
 		shutil.rmtree("./localGame", ignore_errors=False, onerror=None)
 
 def createGameDirectories(player_count):
-	for i in range(player_count):
+	for i in range(len(players)):
 		os.makedirs("./hostedGame/game%d" %i)
 
 def host_game():
@@ -211,6 +216,7 @@ def game_lobby(player_name):
 			print("\n\nType 'start game' to start the game (4+ players required) or press enter to refresh the player list.")
 			user_input = input().lower()
 		serverhost.startGame()
+		createGameDirectories()
 	else:
 		print("\n\nType 'ready' when host starts game (4+ players required) or press enter to refresh the player list.")
 		user_input = ""
@@ -220,12 +226,20 @@ def game_lobby(player_name):
 				print("Host is not ready.")
 			print("\n\nType 'ready' when host starts game (4+ players required) or press enter to refresh the player list.")
 			user_input = input().lower()
+
 	start_multidevice_game()
 
-def start_multidevice_game():
+def start_multidevice_game(playerInfo):
 	print("starting multidevice game")
 	while(1):
 		sleep(1)
+
+def multidevice_round1(playerInfo):
+	clearConsole()
+	print(Fore.LIGHTRED_EX +"%s enter a word:" %player_names[0])
+	phrase = input()
+	writeInitPhrase(phrase, playerInfo)
+
 
 
 def start_game(player_count):
@@ -275,12 +289,12 @@ def round1(player_names):
 	clearConsole()
 	prompt_player(player_names, 0)
 	print(Fore.LIGHTRED_EX +"%s enter a word:" %player_names[0])
-	sentence = input() 
+	phrase = input() 
 	with open('./localGame/init-phrase.txt', 'w') as f: #store for recap round
-		f.write(sentence)
+		f.write(phrase)
 	print()
 
-	return sentence
+	return phrase
 
 def round2(player_names):
 	clearConsole()
@@ -350,9 +364,9 @@ def guess_round(player_names, i):
 		replayAudioLoop(0)
 
 	print(Fore.LIGHTRED_EX +"Type your answer: ")
-	sentence = input()
+	phrase = input()
 	
-	return sentence
+	return phrase
 
 #Helper to play specific file at any given moment
 def give_audio(file):
