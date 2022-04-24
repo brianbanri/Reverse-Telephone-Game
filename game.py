@@ -137,7 +137,7 @@ def start_local_game():
 		start_game(player_count)
 		shutil.rmtree("./localGame", ignore_errors=False, onerror=None)
 
-def createGameDirectories(player_count):
+def createGameDirectories():
 	for i in range(len(players)):
 		os.makedirs("./hostedGame/game%d" %i)
 
@@ -227,16 +227,15 @@ def game_lobby(player_name):
 			print("\n\nType 'ready' when host starts game (4+ players required) or press enter to refresh the player list.")
 			user_input = input().lower()
 
-	start_multidevice_game()
+	start_multidevice_game(playerInfo)
 
 def start_multidevice_game(playerInfo):
 	print("starting multidevice game")
-	while(1):
-		sleep(1)
+	multidevice_round1(playerInfo)
 
 def multidevice_round1(playerInfo):
 	clearConsole()
-	print(Fore.LIGHTRED_EX +"%s enter a word:" %player_names[0])
+	print(Fore.LIGHTRED_EX +"%s enter a word:" %playerInfo.name)
 	phrase = input()
 	writeInitPhrase(phrase, playerInfo)
 
