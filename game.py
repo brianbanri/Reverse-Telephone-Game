@@ -28,8 +28,10 @@ audio = pyaudio.PyAudio()
 FILE_NUM = 0
 promptingDelay = 1
 
-# Global Players List for the Server Thread
+# Globals for the Server Thread
 players = []
+game_start = 0
+
 
 #Beginning of CLUI
 os.system('mode con: cols=170 lines=40')
@@ -51,6 +53,14 @@ class ServerHost(object):
 
     def getPlayerList(self):
     	return players
+
+    def startGame(self):
+    	game_start = 1
+
+    def ready(self):
+    	while(game_start != 1):
+    		sleep(3)
+    	return 1
 
 
 def start_name_server():
@@ -195,13 +205,26 @@ def game_lobby(player_name):
 	playerInfo = Player(player_name, serverhost.register(player_name))
 
 	print_player_list(serverhost.getPlayerList())
+	if(playerInfo.id == 0):
+		print("\n\nType 'start game' to start the game (4+ players required) or press enter to refresh the player list.")
+		user_input = ""
+		while(user_input != "start game"):
+			print_player_list(serverhost.getPlayerList())
+			print("\n\nType 'refresh' to refresh players or type 'start game' to start the game (4+ players required).")
+			user_input = input().lower()
+		serverhost.startGame()
+	else:
+		print("\n\nType 'ready' when all players are present (4+ players required) or press enter to refresh the player list.")
+		user_input = ""
+		while(user_input != "ready"):
+			print_player_list(serverhost.getPlayerList())
+			print("\n\nType 'refresh' to refresh players or type 'start game' to start the game (4+ players required).")
+			user_input = input().lower()
+		serverhost.ready()
+	start_multidevice_game()
 
-	print("\n\nType 'start game' to start the game (4+ players required) or press enter to refresh the player list.")
-	user_input = ""
-	while(user_input != "start game"):
-		print_player_list(serverhost.getPlayerList())
-		print("\n\nType 'refresh' to refresh players or type 'start game' to start the game (4+ players required).")
-		user_input = input().lower()
+def start_multidevice_game():
+	print("starting multidevice game")
 
 
 def start_game(player_count):
