@@ -58,9 +58,7 @@ class ServerHost(object):
     	game_start = 1
 
     def ready(self):
-    	while(game_start != 1):
-    		sleep(3)
-    	return 1
+    	return game_start
 
 
 def start_name_server():
@@ -214,17 +212,20 @@ def game_lobby(player_name):
 			user_input = input().lower()
 		serverhost.startGame()
 	else:
-		print("\n\nType 'ready' when all players are present (4+ players required) or press enter to refresh the player list.")
+		print("\n\nType 'ready' when host starts game (4+ players required) or press enter to refresh the player list.")
 		user_input = ""
-		while(user_input != "ready"):
+		while(user_input != "ready" and serverhost.ready() != 1):
 			print_player_list(serverhost.getPlayerList())
-			print("\n\nType 'ready' when all players are present (4+ players required) or press enter to refresh the player list.")
+			if(serverhost.ready() != 1):
+				print("Host is not ready.")
+			print("\n\nType 'ready' when host starts game (4+ players required) or press enter to refresh the player list.")
 			user_input = input().lower()
-		serverhost.ready()
 	start_multidevice_game()
 
 def start_multidevice_game():
 	print("starting multidevice game")
+	while(1):
+		sleep(1)
 
 
 def start_game(player_count):
