@@ -4,8 +4,8 @@ import wave
 import os
 import shutil
 import threading
-import multiprocessing
 from time import sleep
+import binascii
 
 import Pyro4
 import Pyro4.naming
@@ -64,6 +64,18 @@ class ServerHost(object):
     	fp = open('./hostedGame/game'+str(playerID)+'/init-phrase.txt', 'w')
     	fp.write(phrase)
     	fp.close()
+
+    def send_audio_round_data(self, data):
+    	playerID = data[0]
+    	roundNumber = data[1]
+    	audioStr = data[2]
+    	audioStr = binascii.unhexlify(audioStr.encode('utf-8'))
+    	waveFile = wave.open('./hostedGame/game'+str(playerID)+'/'+str(roundNumber)+'.wav', 'wb')
+    	waveFile.setnchannels(CHANNELS)
+    	waveFile.setsampwidth(audio.get_sample_size(FORMAT))
+    	waveFile.setframerate(RATE)
+    	waveFile.writeframes(audioStr)
+    	waveFile.close()
 
 
 def start_name_server():
@@ -222,7 +234,6 @@ def game_lobby(player_name):
 		user_input = ""
 		while(user_input != "ready" or serverhost.ready() != 1):
 			print_player_list(serverhost.getPlayerList())
-			print(serverhost.ready())
 			if(serverhost.ready() != 1):
 				print("Host is not ready.")
 			print("\n\nType 'ready' when host starts game (4+ players required) or press enter to refresh the player list.")
@@ -231,8 +242,13 @@ def game_lobby(player_name):
 	start_multidevice_game(playerInfo, serverhost)
 
 def start_multidevice_game(playerInfo, serverhost):
-	print("starting multidevice game")
+	round_counter = 0
+
+	round_counter += 1
 	multidevice_round1(playerInfo, serverhost)
+
+	round_counter += 1
+	multidevice_round2(playerInfo, serverhost)
 
 def multidevice_round1(playerInfo, serverhost):
 	clearConsole()
@@ -240,7 +256,72 @@ def multidevice_round1(playerInfo, serverhost):
 	phrase = input()
 	serverhost.writeInitPhrase(phrase, playerInfo.id)
 
+def multidevice_round2(playerInfo, serverhost):
+	clearConsole()
+	#serverhost.getRoundData(playerInfo.id, 2)
 
+	print(Fore.LIGHTRED_EX + "Record yourself saying this word.")
+	sleep(promptingDelay)
+	print("the phrase")
+	print()
+	sleep(promptingDelay)
+	print(Fore.LIGHTRED_EX +"Ready to record?")
+	ready_check([playerInfo.name], 0)
+	local_record_audio()
+	prep_send_audio_round_data(playerInfo, serverhost, 2)
+	print()
+
+def multidevice_reverse_round(player_names, i):
+	clearConsole()
+	prompt_player(player_names, i)
+	print(Fore.LIGHTRED_EX +"Record yourself saying repeating the word you will hear.")
+	ready_check(player_names, i)
+	reverse_audio()
+	play_audio(1)
+	
+
+	print(Fore.LIGHTRED_EX +"Type 'replay' to re-hear the audio, or just press enter to start recording.")
+	replayAudioLoop(1)
+
+	record_audio()
+	print()
+	
+
+def multidevice_interpret_round(player_names, i):
+	clearConsole()
+	prompt_player(player_names, i)
+	print(Fore.LIGHTRED_EX +"Record your best guess of what the original word was after hearing the reversed audio.")
+	ready_check(player_names, i)
+	reverse_audio()
+	play_audio(1)
+
+
+	print(Fore.LIGHTRED_EX +"Type 'replay' to re-hear the audio, or just press enter to start recording.")
+	replayAudioLoop(1)
+
+	record_audio()
+	print()
+
+def prep_send_audio_round_data(playerInfo, serverhost, roundNumber):
+
+    wf = wave.open("audio-recording.wav", 'rb')
+
+    data = wf.readframes(CHUNK)
+    b = bytearray()
+    while len(data) > 0:
+        b.extend(data)
+        data = wf.readframes(CHUNK)
+
+
+    #b = ''.join(chr(x) for x in b)
+    hex_data = binascii.hexlify(b)
+    str_data = hex_data.decode('utf-8')
+
+    wf.close()
+
+    serverhost.send_audio_round_data([playerInfo.id, roundNumber, str_data])
+
+    
 
 def start_game(player_count):
 	round_counter = 0
@@ -449,6 +530,32 @@ def ready_check(player_names, i):
 	while(input() != "ready"):
 		pass
 	print()
+
+def local_record_audio():
+
+	stream = audio.open(format=FORMAT, channels=CHANNELS,
+                rate=RATE, input=True,input_device_index = audioDevice,
+                frames_per_buffer=CHUNK)
+	print (Fore.LIGHTRED_EX + "recording started")
+	Recordframes = []
+	
+
+	timer_recording = threading.Thread(target=waitingBar, args=(2,), daemon=True)
+	timer_recording.start()
+	for i in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
+	    data = stream.read(CHUNK)
+	    Recordframes.append(data)
+	print (Fore.LIGHTRED_EX + "recording stopped")
+	 
+	stream.stop_stream()
+	stream.close()
+
+	waveFile = wave.open("./audio-recording"+".wav", 'wb')
+	waveFile.setnchannels(CHANNELS)
+	waveFile.setsampwidth(audio.get_sample_size(FORMAT))
+	waveFile.setframerate(RATE)
+	waveFile.writeframes(b''.join(Recordframes))
+	waveFile.close()
 
 def record_audio():
 
