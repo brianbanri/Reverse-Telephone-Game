@@ -227,13 +227,13 @@ def game_lobby(player_name):
 			print("\n\nType 'ready' when host starts game (4+ players required) or press enter to refresh the player list.")
 			user_input = input().lower()
 
-	start_multidevice_game(playerInfo)
+	start_multidevice_game(playerInfo, serverhost)
 
-def start_multidevice_game(playerInfo):
+def start_multidevice_game(playerInfo, serverhost):
 	print("starting multidevice game")
-	multidevice_round1(playerInfo)
+	multidevice_round1(playerInfo, serverhost)
 
-def multidevice_round1(playerInfo):
+def multidevice_round1(playerInfo, serverhost):
 	clearConsole()
 	print(Fore.LIGHTRED_EX +"%s enter a word:" %playerInfo.name)
 	phrase = input()
