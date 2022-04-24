@@ -44,6 +44,10 @@ class Player:
     self.name = name
     self.id = id
 
+def waitForFile(file_path):
+	while(os.path.exists(file_path) != 1):
+		pass
+
 @Pyro4.expose
 class ServerHost(object):
     def register(self, player_name):
@@ -64,6 +68,20 @@ class ServerHost(object):
     	fp = open('./hostedGame/game'+str(playerID)+'/init-phrase.txt', 'w')
     	fp.write(phrase)
     	fp.close()
+
+    def get_round_data(self, playerID, roundNumber):
+    	if (roundNumber == 2):
+    		file_path = './hostedGame/game'+str((playerID+1)%len(players))+'/init-phrase.txt'
+    		wait_for_file_thread = threading.Thread(target=waitForFile, args=(file_path,), daemon=True)
+    		wait_for_file_thread.start()
+    		wait_for_file_thread.join()
+			
+    		f = open(file_path, "r")
+    		phrase = f.read()
+    		f.close()
+    		return phrase
+    	elif (roundNumber < len(players) - 1):
+    		pass
 
     def send_audio_round_data(self, data):
     	playerID = data[0]
@@ -258,11 +276,12 @@ def multidevice_round1(playerInfo, serverhost):
 
 def multidevice_round2(playerInfo, serverhost):
 	clearConsole()
-	#serverhost.getRoundData(playerInfo.id, 2)
+	data = serverhost.get_round_data(playerInfo.id, 2)
+	phrase = data
 
 	print(Fore.LIGHTRED_EX + "Record yourself saying this word.")
 	sleep(promptingDelay)
-	print("the phrase")
+	print(phrase)
 	print()
 	sleep(promptingDelay)
 	print(Fore.LIGHTRED_EX +"Ready to record?")
