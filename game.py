@@ -210,7 +210,7 @@ def game_lobby(player_name):
 		user_input = ""
 		while(user_input != "start game"):
 			print_player_list(serverhost.getPlayerList())
-			print("\n\nType 'refresh' to refresh players or type 'start game' to start the game (4+ players required).")
+			print("\n\nType 'start game' to start the game (4+ players required) or press enter to refresh the player list.")
 			user_input = input().lower()
 		serverhost.startGame()
 	else:
@@ -218,7 +218,7 @@ def game_lobby(player_name):
 		user_input = ""
 		while(user_input != "ready"):
 			print_player_list(serverhost.getPlayerList())
-			print("\n\nType 'refresh' to refresh players or type 'start game' to start the game (4+ players required).")
+			print("\n\nType 'ready' when all players are present (4+ players required) or press enter to refresh the player list.")
 			user_input = input().lower()
 		serverhost.ready()
 	start_multidevice_game()
