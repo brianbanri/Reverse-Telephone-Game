@@ -60,7 +60,7 @@ class ServerHost(object):
     def ready(self):
     	return game_start
 
-    def write(self, phrase, playerInfo):
+    def writeInitPhrase(self, phrase, playerInfo):
     	fp = open('./hostedGame/game'+playerInfo.id+'init-phrase.txt' 'w')
     	fp.write(phrase)
     	fp.close()
