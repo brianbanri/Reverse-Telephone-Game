@@ -72,6 +72,7 @@ class ServerHost(object):
     def get_round_data(self, playerID, roundNumber):
     	if (roundNumber == 2):
     		file_path = './hostedGame/game'+str((playerID+1)%len(players))+'/init-phrase.txt'
+
     		wait_for_file_thread = threading.Thread(target=waitForFile, args=(file_path,), daemon=True)
     		wait_for_file_thread.start()
     		wait_for_file_thread.join()
@@ -80,13 +81,14 @@ class ServerHost(object):
     		phrase = f.read()
     		f.close()
     		return phrase
-    	elif (roundNumber < len(players) - 1):
+    	elif (roundNumber < len(players)):
     		file_path = './hostedGame/game'+str((playerID+roundNumber-1)%len(players))+'/'+str(roundNumber-1)+'-reverse.wav'
+
     		wait_for_file_thread = threading.Thread(target=waitForFile, args=(file_path,), daemon=True)
     		wait_for_file_thread.start()
     		wait_for_file_thread.join()
 
-    		wf = wave.open("audio-recording.wav", 'rb')
+    		wf = wave.open(file_path, 'rb')
     		data = wf.readframes(CHUNK)
     		b = bytearray()
     		while len(data) > 0:
@@ -106,14 +108,14 @@ class ServerHost(object):
     	roundNumber = data[1]
     	audioStr = data[2]
     	audioStr = binascii.unhexlify(audioStr.encode('utf-8'))
-    	waveFile = wave.open('./hostedGame/game'+str(playerID)+'/'+str(roundNumber)+'.wav', 'wb')
+    	waveFile = wave.open('./hostedGame/game'+str((playerID+roundNumber-1)%len(players))+'/'+str(roundNumber)+'.wav', 'wb')
     	waveFile.setnchannels(CHANNELS)
     	waveFile.setsampwidth(audio.get_sample_size(FORMAT))
     	waveFile.setframerate(RATE)
     	waveFile.writeframes(audioStr)
     	waveFile.close()
 
-    	wf = wave.open('./hostedGame/game'+str(playerID)+'/'+str(roundNumber)+'.wav', 'rb')
+    	wf = wave.open('./hostedGame/game'+str((playerID+roundNumber-1)%len(players))+'/'+str(roundNumber)+'.wav', 'rb')
 
     	stream = audio.open(
     		format = audio.get_format_from_width(wf.getsampwidth()),
@@ -129,7 +131,7 @@ class ServerHost(object):
     		recording.append(data)
     	wf.close()
     	recording = recording[::-1]
-    	waveFile = wave.open('./hostedGame/game'+str(playerID)+'/'+str(roundNumber)+'-reverse'+'.wav', 'wb')
+    	waveFile = wave.open('./hostedGame/game'+str((playerID+roundNumber-1)%len(players))+'/'+str(roundNumber)+'-reverse'+'.wav', 'wb')
     	waveFile.setnchannels(CHANNELS)
     	waveFile.setsampwidth(audio.get_sample_size(FORMAT))
     	waveFile.setframerate(RATE)
@@ -212,6 +214,13 @@ def createGameDirectories():
 	for i in range(len(players)):
 		os.makedirs("./hostedGame/game%d" %i)
 
+def createLocalDirectory(playerID):
+	if (os.path.exists("./%d" %playerID)):
+		shutil.rmtree("./%d" %playerID, ignore_errors=False, onerror=None)
+
+	os.makedirs("./%d" %playerID)
+
+
 def host_game():
 	clearConsole()
 
@@ -277,6 +286,7 @@ def game_lobby(player_name):
 	
 	serverhost = Pyro4.Proxy("PYRONAME:reversetelephone.serverhost")    # use name server object lookup uri shortcut
 	playerInfo = Player(player_name, serverhost.register(player_name))
+	createLocalDirectory(playerInfo.id)
 
 	print_player_list(serverhost.getPlayerList())
 	if(playerInfo.id == 0):
@@ -299,6 +309,7 @@ def game_lobby(player_name):
 			user_input = input().lower()
 
 	start_multidevice_game(playerInfo, serverhost)
+	shutil.rmtree("./%d" %playerInfo.id, ignore_errors=False, onerror=None)
 
 def start_multidevice_game(playerInfo, serverhost):
 	player_count = len(serverhost.getPlayerList())
@@ -337,7 +348,7 @@ def multidevice_round2(playerInfo, serverhost):
 	sleep(promptingDelay)
 	print(Fore.LIGHTRED_EX +"Ready to record?")
 	ready_check([playerInfo.name], 0)
-	local_record_audio()
+	local_record_audio(playerInfo.id)
 	prep_send_audio_round_data(playerInfo, serverhost, 2)
 	print()
 
@@ -346,7 +357,7 @@ def multidevice_reverse_round(playerInfo, serverhost, round_counter):
 	audioStr = serverhost.get_round_data(playerInfo.id, round_counter)
 
 	audioStr = binascii.unhexlify(audioStr.encode('utf-8'))
-	waveFile = wave.open("./audio-recording"+".wav", 'wb')
+	waveFile = wave.open("./%d/audio-recording.wav" %playerInfo.id, 'wb')
 	waveFile.setnchannels(CHANNELS)
 	waveFile.setsampwidth(audio.get_sample_size(FORMAT))
 	waveFile.setframerate(RATE)
@@ -355,23 +366,23 @@ def multidevice_reverse_round(playerInfo, serverhost, round_counter):
 
 	print(Fore.LIGHTRED_EX +"Record yourself repeating the what you will hear.")
 	ready_check([playerInfo.name], 0)
-	local_play_audio()
+	local_play_audio(playerInfo.id)
 
 	print(Fore.LIGHTRED_EX +"Type 'replay' to re-hear the audio, or just press enter to start recording.")
-	localReplayAudioLoop()
+	localReplayAudioLoop(playerInfo.id)
 
-	local_record_audio()
+	local_record_audio(playerInfo.id)
+
+	prep_send_audio_round_data(playerInfo, serverhost, round_counter)
 	print()
 	
 
 def multidevice_interpret_round(player_names, serverhost, round_counter):
 	clearConsole()
-	data = serverhost.get_round_data(playerInfo.id, round_counter)
-	name = data[0]
-	audioStr = data[1]
+	audioStr = serverhost.get_round_data(playerInfo.id, round_counter)
 
 	audioStr = binascii.unhexlify(audioStr.encode('utf-8'))
-	waveFile = wave.open("./audio-recording"+".wav", 'wb')
+	waveFile = wave.open("./%d/audio-recording.wav" %playerInfo.id, 'wb')
 	waveFile.setnchannels(CHANNELS)
 	waveFile.setsampwidth(audio.get_sample_size(FORMAT))
 	waveFile.setframerate(RATE)
@@ -380,17 +391,19 @@ def multidevice_interpret_round(player_names, serverhost, round_counter):
 
 	print(Fore.LIGHTRED_EX +"Record your best guess of what the original word was after hearing the reversed audio.")
 	ready_check([playerInfo.name], 0)
-	local_play_audio()
+	local_play_audio(playerInfo.id)
 
 	print(Fore.LIGHTRED_EX +"Type 'replay' to re-hear the audio, or just press enter to start recording.")
-	localReplayAudioLoop()
+	localReplayAudioLoop(playerInfo.id)
 
-	local_record_audio()
+	local_record_audio(playerInfo.id)
+
+	prep_send_audio_round_data(playerInfo, serverhost, round_counter)
 	print()
 
 def prep_send_audio_round_data(playerInfo, serverhost, roundNumber):
 
-    wf = wave.open("audio-recording.wav", 'rb')
+    wf = wave.open("./%d/audio-recording.wav" %playerInfo.id, 'rb')
 
     data = wf.readframes(CHUNK)
     b = bytearray()
@@ -618,14 +631,14 @@ def ready_check(player_names, i):
 		pass
 	print()
 
-def localReplayAudioLoop():
+def localReplayAudioLoop(playerID):
 	while(input() == "replay"): 
-		local_play_audio()
+		local_play_audio(playerID)
 	print()
 
-def local_play_audio():
+def local_play_audio(playerID):
 
-	wf = wave.open("./audio-recording.wav", 'rb')
+	wf = wave.open("./%d/audio-recording.wav" %playerID, 'rb')
 
 	stream = audio.open(
 	    format = audio.get_format_from_width(wf.getsampwidth()),
@@ -642,7 +655,7 @@ def local_play_audio():
 	wf.close()
 	stream.close()
 
-def local_record_audio():
+def local_record_audio(playerID):
 
 	stream = audio.open(format=FORMAT, channels=CHANNELS,
                 rate=RATE, input=True,input_device_index = audioDevice,
@@ -661,7 +674,7 @@ def local_record_audio():
 	stream.stop_stream()
 	stream.close()
 
-	waveFile = wave.open("./audio-recording"+".wav", 'wb')
+	waveFile = wave.open("./%d/audio-recording.wav" %playerID, 'wb')
 	waveFile.setnchannels(CHANNELS)
 	waveFile.setsampwidth(audio.get_sample_size(FORMAT))
 	waveFile.setframerate(RATE)
