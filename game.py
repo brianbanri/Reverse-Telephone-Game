@@ -81,7 +81,25 @@ class ServerHost(object):
     		f.close()
     		return phrase
     	elif (roundNumber < len(players) - 1):
-    		pass
+    		file_path = './hostedGame/game'+str((playerID+roundNumber-1)%len(players))+'/'+str(roundNumber-1)+'-reverse.wav'
+    		wait_for_file_thread = threading.Thread(target=waitForFile, args=(file_path,), daemon=True)
+    		wait_for_file_thread.start()
+    		wait_for_file_thread.join()
+
+    		wf = wave.open("audio-recording.wav", 'rb')
+    		data = wf.readframes(CHUNK)
+    		b = bytearray()
+    		while len(data) > 0:
+    			b.extend(data)
+    			data = wf.readframes(CHUNK)
+
+    		#b = ''.join(chr(x) for x in b)
+    		hex_data = binascii.hexlify(b)
+    		str_data = hex_data.decode('utf-8')
+
+    		wf.close()
+
+    		return [players[playerID-1].name, str_data]
 
     def send_audio_round_data(self, data):
     	playerID = data[0]
@@ -282,7 +300,7 @@ def game_lobby(player_name):
 
 	start_multidevice_game(playerInfo, serverhost)
 
-def start_multidevice_game(playerInfo, serverhost):
+def start_multidevice_game(playerInfo, serverhost, round_counter):
 	round_counter = 0
 
 	round_counter += 1
@@ -290,6 +308,14 @@ def start_multidevice_game(playerInfo, serverhost):
 
 	round_counter += 1
 	multidevice_round2(playerInfo, serverhost)
+
+	round_counter += 1
+	while round_counter < player_count:
+		if round_counter % 2 == 1:
+			multidevice_reverse_round(player_names, serverhost, round_counter)
+		else:
+			multidevice_interpret_round(player_names, serverhost, round_counter)
+		round_counter += 1
 
 def multidevice_round1(playerInfo, serverhost):
 	clearConsole()
@@ -313,35 +339,53 @@ def multidevice_round2(playerInfo, serverhost):
 	prep_send_audio_round_data(playerInfo, serverhost, 2)
 	print()
 
-def multidevice_reverse_round(player_names, i):
+def multidevice_reverse_round(playerInfo, serverhost, round_counter):
 	clearConsole()
-	prompt_player(player_names, i)
-	print(Fore.LIGHTRED_EX +"Record yourself saying repeating the word you will hear.")
-	ready_check(player_names, i)
-	reverse_audio()
-	play_audio(1)
-	
+	data = serverhost.get_round_data(playerInfo.id, round_counter)
+	name = data[0]
+	audioStr = data[1]
+
+	audioStr = binascii.unhexlify(audioStr.encode('utf-8'))
+	waveFile = wave.open("./audio-recording"+".wav", 'wb')
+	waveFile.setnchannels(CHANNELS)
+	waveFile.setsampwidth(audio.get_sample_size(FORMAT))
+	waveFile.setframerate(RATE)
+	waveFile.writeframes(audioStr)
+	waveFile.close()
+
+	print(Fore.LIGHTRED_EX +"Record yourself repeating the what you will hear.")
+	ready_check([playerInfo.name], 0)
+	local_play_audio()
 
 	print(Fore.LIGHTRED_EX +"Type 'replay' to re-hear the audio, or just press enter to start recording.")
-	replayAudioLoop(1)
+	localReplayAudioLoop()
 
-	record_audio()
+	local_record_audio()
 	print()
 	
 
 def multidevice_interpret_round(player_names, i):
 	clearConsole()
-	prompt_player(player_names, i)
-	print(Fore.LIGHTRED_EX +"Record your best guess of what the original word was after hearing the reversed audio.")
-	ready_check(player_names, i)
-	reverse_audio()
-	play_audio(1)
+	data = serverhost.get_round_data(playerInfo.id, round_counter)
+	name = data[0]
+	audioStr = data[1]
 
+	audioStr = binascii.unhexlify(audioStr.encode('utf-8'))
+	waveFile = wave.open("./audio-recording"+".wav", 'wb')
+	waveFile.setnchannels(CHANNELS)
+	waveFile.setsampwidth(audio.get_sample_size(FORMAT))
+	waveFile.setframerate(RATE)
+	waveFile.writeframes(audioStr)
+	waveFile.close()
+
+	print(Fore.LIGHTRED_EX +"Record your best guess of what the original word was after hearing the reversed audio.")
+	ready_check([playerInfo.name], 0)
+	local_play_audio()
 
 	print(Fore.LIGHTRED_EX +"Type 'replay' to re-hear the audio, or just press enter to start recording.")
-	replayAudioLoop(1)
+	localReplayAudioLoop()
 
-	record_audio()
+	local_record_audio()
 	print()
 
 def prep_send_audio_round_data(playerInfo, serverhost, roundNumber):
@@ -440,7 +484,7 @@ def replayAudioLoop(reverse):
 def reverse_round(player_names, i):
 	clearConsole()
 	prompt_player(player_names, i)
-	print(Fore.LIGHTRED_EX +"Record yourself saying repeating the word you will hear.")
+	print(Fore.LIGHTRED_EX +"Record yourself repeating the what you will hear.")
 	ready_check(player_names, i)
 	reverse_audio()
 	play_audio(1)
@@ -573,6 +617,30 @@ def ready_check(player_names, i):
 	while(input() != "ready"):
 		pass
 	print()
+
+def localReplayAudioLoop():
+	while(input() == "replay"): 
+		local_play_audio()
+	print()
+
+def local_play_audio():
+
+	wf = wave.open("./audio-recording.wav", 'rb')
+
+	stream = audio.open(
+	    format = audio.get_format_from_width(wf.getsampwidth()),
+	    channels = wf.getnchannels(),
+	    rate = wf.getframerate(),
+	    output = True
+	)
+
+	data = wf.readframes(CHUNK)
+	while len(data) > 0:
+	    stream.write(data)
+	    data = wf.readframes(CHUNK)
+	
+	wf.close()
+	stream.close()
 
 def local_record_audio():
 
