@@ -300,7 +300,7 @@ def game_lobby(player_name):
 
 	start_multidevice_game(playerInfo, serverhost)
 
-def start_multidevice_game(playerInfo, serverhost, round_counter):
+def start_multidevice_game(playerInfo, serverhost):
 	round_counter = 0
 
 	round_counter += 1
@@ -364,7 +364,7 @@ def multidevice_reverse_round(playerInfo, serverhost, round_counter):
 	print()
 	
 
-def multidevice_interpret_round(player_names, i):
+def multidevice_interpret_round(player_names, serverhost, round_counter):
 	clearConsole()
 	data = serverhost.get_round_data(playerInfo.id, round_counter)
 	name = data[0]
