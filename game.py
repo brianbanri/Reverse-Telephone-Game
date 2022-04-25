@@ -99,7 +99,7 @@ class ServerHost(object):
 
     		wf.close()
 
-    		return [players[playerID-1].name, str_data]
+    		return str_data
 
     def send_audio_round_data(self, data):
     	playerID = data[0]
@@ -301,6 +301,8 @@ def game_lobby(player_name):
 	start_multidevice_game(playerInfo, serverhost)
 
 def start_multidevice_game(playerInfo, serverhost):
+	player_count = len(serverhost.getPlayerList())
+
 	round_counter = 0
 
 	round_counter += 1
@@ -312,9 +314,9 @@ def start_multidevice_game(playerInfo, serverhost):
 	round_counter += 1
 	while round_counter < player_count:
 		if round_counter % 2 == 1:
-			multidevice_reverse_round(player_names, serverhost, round_counter)
+			multidevice_reverse_round(playerInfo, serverhost, round_counter)
 		else:
-			multidevice_interpret_round(player_names, serverhost, round_counter)
+			multidevice_interpret_round(playerInfo, serverhost, round_counter)
 		round_counter += 1
 
 def multidevice_round1(playerInfo, serverhost):
@@ -341,9 +343,7 @@ def multidevice_round2(playerInfo, serverhost):
 
 def multidevice_reverse_round(playerInfo, serverhost, round_counter):
 	clearConsole()
-	data = serverhost.get_round_data(playerInfo.id, round_counter)
-	name = data[0]
-	audioStr = data[1]
+	audioStr = serverhost.get_round_data(playerInfo.id, round_counter)
 
 	audioStr = binascii.unhexlify(audioStr.encode('utf-8'))
 	waveFile = wave.open("./audio-recording"+".wav", 'wb')
