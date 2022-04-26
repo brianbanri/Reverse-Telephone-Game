@@ -25,8 +25,8 @@ RATE = 44100
 CHUNK = 512
 RECORD_SECONDS = 3
 audio = pyaudio.PyAudio()
-FILE_NUM = 0
 promptingDelay = 1
+FILE_NUM = 0
 
 # Globals for the Server Thread
 players = []
@@ -138,17 +138,17 @@ class ServerHost(object):
     		f.close()
     		return phrase
     	elif (roundNumber < len(players) + 1):
-            print("1")
+            
             if (roundNumber == len(players) and len(players) % 2 == 1):
                 file_path = './hostedGame/game'+str((playerID+roundNumber-1)%len(players))+'/'+str(roundNumber-1)+'.wav'
             else:
                 file_path = './hostedGame/game'+str((playerID+roundNumber-1)%len(players))+'/'+str(roundNumber-1)+'-reverse.wav'
 
-            print("2")
+            
             wait_for_file_thread = threading.Thread(target=waitForFile, args=(file_path,), daemon=True)
             wait_for_file_thread.start()
             wait_for_file_thread.join()
-            print("3")
+            
 
             wf = wave.open(file_path, 'rb')
             data = wf.readframes(CHUNK)
@@ -156,12 +156,12 @@ class ServerHost(object):
             while len(data) > 0:
             	b.extend(data)
             	data = wf.readframes(CHUNK)
-            print("4")
+            
 
             #b = ''.join(chr(x) for x in b)
             hex_data = binascii.hexlify(b)
             str_data = hex_data.decode('utf-8')
-            print("5")
+            
 
             wf.close()
 
@@ -223,29 +223,30 @@ def waitingBar(seconds):
 # Function that puts the players on the title screen to start or join a game
 def titleScreen():
     while(1):
-    	clearConsole()
+        resetGameVariables()
+        clearConsole()
 
-    	# UI Prompt
-    	titleScreen = text2art("                       WELCOME                   TO \nREVERSE TELEPHONE GAME", font='big')
-    	print(f"{Fore.LIGHTGREEN_EX}{titleScreen}")
-    	sleep(promptingDelay)
-    	print(Fore.LIGHTRED_EX + "Type \"Start Local Game\" to start a new game on this device")
-    	print(Fore.LIGHTRED_EX + "Type \"Host Game\" to host a new game")
-    	print(Fore.LIGHTRED_EX + "Type \"Join Game\" to join an existing game")
+        # UI Prompt
+        titleScreen = text2art("                       WELCOME                   TO \nREVERSE TELEPHONE GAME", font='big')
+        print(f"{Fore.LIGHTGREEN_EX}{titleScreen}")
+        sleep(promptingDelay)
+        print(Fore.LIGHTRED_EX + "Type \"Start Local Game\" to start a new game on this device")
+        print(Fore.LIGHTRED_EX + "Type \"Host Game\" to host a new game")
+        print(Fore.LIGHTRED_EX + "Type \"Join Game\" to join an existing game")
 
-    	# Takes user input and lets the user continue when a valid input is given
-    	user_input = ""
-    	while(not (user_input.lower() in ["host game", "join game", "start local game"])):
-    		user_input = input()
-    	print()
+        # Takes user input and lets the user continue when a valid input is given
+        user_input = ""
+        while(not (user_input.lower() in ["host game", "join game", "start local game"])):
+        	user_input = input()
+        print()
 
-    	# Starts the program for the following selection
-    	if user_input.lower() == "host game":
-    		host_game()
-    	elif user_input.lower() == "join game":
-    		join_game()
-    	elif user_input.lower() == "start local game":
-    		start_local_game()
+        # Starts the program for the following selection
+        if user_input.lower() == "host game":
+        	host_game()
+        elif user_input.lower() == "join game":
+        	join_game()
+        elif user_input.lower() == "start local game":
+        	start_local_game()
 
 def start_local_game():
 	clearConsole()
@@ -285,6 +286,13 @@ def createLocalDirectory(playerID):
 
 	os.makedirs("./%d" %playerID)
 
+def resetGameVariables():
+    global FILE_NUM
+    FILE_NUM = 0
+    global players
+    players = []
+    global game_start
+    game_start = 0
 
 def host_game():
     clearConsole()
@@ -304,6 +312,7 @@ def host_game():
     print(Fore.LIGHTRED_EX + "Enter your name:")
     player_name = input()
     print()
+    clearConsole()
 
     print("Starting up server... Please tell your players to wait until you see the lobby to have them join.")
 
@@ -313,6 +322,8 @@ def host_game():
 
     # Give time for the nameserver to start
     sleep(2)
+    clearConsole()
+    print("Starting up server... Please tell your players to wait until you see the lobby to have them join.")
 
     # Start Pyro ServerHost
     server_host_thread = threading.Thread(target=start_server_host, daemon=True)
