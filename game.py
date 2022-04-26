@@ -279,44 +279,44 @@ def createLocalDirectory(playerID):
 
 
 def host_game():
-	clearConsole()
+    clearConsole()
 
-	if (os.path.exists("./hostedGame")):
-		shutil.rmtree("./hostedGame", ignore_errors=False, onerror=None)
-		
+    if (os.path.exists("./hostedGame")):
+    	shutil.rmtree("./hostedGame", ignore_errors=False, onerror=None)
+    	
 
-	os.makedirs("./hostedGame")
+    os.makedirs("./hostedGame")
 
-	print(Fore.LIGHTRED_EX + "Start Hosting Game...\n")
+    print(Fore.LIGHTRED_EX + "Start Hosting Game...\n")
 
-	waitingBar(1)
+    waitingBar(1)
 
-	sleep(promptingDelay)
-	print()
-	print(Fore.LIGHTRED_EX + "Enter your name:")
-	player_name = input()
-	print()
+    sleep(promptingDelay)
+    print()
+    print(Fore.LIGHTRED_EX + "Enter your name:")
+    player_name = input()
+    print()
 
     print("Starting up server... Please tell your players to wait until you see the lobby to have them join.")
 
-	# Start Pyro NameServer
-	name_server_thread = threading.Thread(target=start_name_server, daemon=True)
-	name_server_thread.start()
+    # Start Pyro NameServer
+    name_server_thread = threading.Thread(target=start_name_server, daemon=True)
+    name_server_thread.start()
 
-	# Give time for the nameserver to start
-	sleep(2)
+    # Give time for the nameserver to start
+    sleep(2)
 
-	# Start Pyro ServerHost
-	server_host_thread = threading.Thread(target=start_server_host, daemon=True)
-	server_host_thread.start()
+    # Start Pyro ServerHost
+    server_host_thread = threading.Thread(target=start_server_host, daemon=True)
+    server_host_thread.start()
 
-	# Give time for the server host to start
-	sleep(10)
+    # Give time for the server host to start
+    sleep(10)
 
-	game_lobby(player_name)
-	
-	#clean up previous game files
-	shutil.rmtree("./hostedGame", ignore_errors=False, onerror=None)
+    game_lobby(player_name)
+
+    #clean up previous game files
+    shutil.rmtree("./hostedGame", ignore_errors=False, onerror=None)
 
 
 def join_game():
@@ -358,14 +358,14 @@ def game_lobby(player_name):
     	serverhost.startGame()
     	createGameDirectories()
     else:
-    	print("\n\nType 'ready' when host starts game (4+ players required) or press enter to refresh the player list.")
-    	user_input = ""
-    	while(user_input != "ready" or serverhost.ready() != 1):
-    		print_player_list(serverhost.getPlayerList())
-    		print("\n\nType 'ready' when host starts game (4+ players required) or press enter to refresh the player list.")
+        print("\n\nType 'ready' when host starts game (4+ players required) or press enter to refresh the player list.")
+        user_input = ""
+        while(user_input != "ready" or serverhost.ready() != 1):
+            print_player_list(serverhost.getPlayerList())
+            print("\n\nType 'ready' when host starts game (4+ players required) or press enter to refresh the player list.")
             if(serverhost.ready() != 1):
                 print("\nHost is not ready.")
-    		user_input = input().lower()
+            user_input = input().lower()
 
     start_multidevice_game(playerInfo, serverhost)
     shutil.rmtree("./%d" %playerInfo.id, ignore_errors=False, onerror=None)
@@ -408,22 +408,22 @@ def multidevice_round1(playerInfo, serverhost):
 	serverhost.writeInitPhrase(phrase, playerInfo.id)
 
 def multidevice_round2(playerInfo, serverhost):
-	clearConsole()
-    print("Waiting for other players...")
-	data = serverhost.get_round_data(playerInfo.id, 2)
     clearConsole()
-	phrase = data
+    print("Waiting for other players...")
+    data = serverhost.get_round_data(playerInfo.id, 2)
+    clearConsole()
+    phrase = data
 
-	print(Fore.LIGHTRED_EX + "Record yourself saying this word.")
-	sleep(promptingDelay)
-	print(phrase)
-	print()
-	sleep(promptingDelay)
-	print(Fore.LIGHTRED_EX +"Ready to record?")
-	ready_check([playerInfo.name], 0)
-	local_record_audio(playerInfo.id)
-	prep_send_audio_round_data(playerInfo, serverhost, 2)
-	print()
+    print(Fore.LIGHTRED_EX + "Record yourself saying this word.")
+    sleep(promptingDelay)
+    print(phrase)
+    print()
+    sleep(promptingDelay)
+    print(Fore.LIGHTRED_EX +"Ready to record?")
+    ready_check([playerInfo.name], 0)
+    local_record_audio(playerInfo.id)
+    prep_send_audio_round_data(playerInfo, serverhost, 2)
+    print()
 
 def load_audio_string_to_wave(audioStr, playerInfo):
     audioStr = binascii.unhexlify(audioStr.encode('utf-8'))
@@ -456,58 +456,58 @@ def multidevice_reverse_round(playerInfo, serverhost, round_counter):
 	
 
 def multidevice_interpret_round(playerInfo, serverhost, round_counter):
-	clearConsole()
+    clearConsole()
     print("Waiting for other players...")
-	audioStr = serverhost.get_round_data(playerInfo.id, round_counter)
+    audioStr = serverhost.get_round_data(playerInfo.id, round_counter)
     clearConsole()
 
-	audioStr = binascii.unhexlify(audioStr.encode('utf-8'))
-	waveFile = wave.open("./%d/audio-recording.wav" %playerInfo.id, 'wb')
-	waveFile.setnchannels(CHANNELS)
-	waveFile.setsampwidth(audio.get_sample_size(FORMAT))
-	waveFile.setframerate(RATE)
-	waveFile.writeframes(audioStr)
-	waveFile.close()
+    audioStr = binascii.unhexlify(audioStr.encode('utf-8'))
+    waveFile = wave.open("./%d/audio-recording.wav" %playerInfo.id, 'wb')
+    waveFile.setnchannels(CHANNELS)
+    waveFile.setsampwidth(audio.get_sample_size(FORMAT))
+    waveFile.setframerate(RATE)
+    waveFile.writeframes(audioStr)
+    waveFile.close()
 
-	print(Fore.LIGHTRED_EX +"Record your best guess of what the original word was after hearing the reversed audio.")
-	ready_check([playerInfo.name], 0)
-	local_play_audio(playerInfo.id)
+    print(Fore.LIGHTRED_EX +"Record your best guess of what the original word was after hearing the reversed audio.")
+    ready_check([playerInfo.name], 0)
+    local_play_audio(playerInfo.id)
 
-	print(Fore.LIGHTRED_EX +"Type 'replay' to re-hear the audio, or just press enter to start recording.")
-	localReplayAudioLoop(playerInfo.id)
+    print(Fore.LIGHTRED_EX +"Type 'replay' to re-hear the audio, or just press enter to start recording.")
+    localReplayAudioLoop(playerInfo.id)
 
-	local_record_audio(playerInfo.id)
+    local_record_audio(playerInfo.id)
 
-	prep_send_audio_round_data(playerInfo, serverhost, round_counter)
-	print()
+    prep_send_audio_round_data(playerInfo, serverhost, round_counter)
+    print()
 
 
 def multidevice_guess_round(playerInfo, serverhost, round_counter):
-	clearConsole()
+    clearConsole()
     print("Waiting for other players...")
-	audioStr = serverhost.get_round_data(playerInfo.id, round_counter)
+    audioStr = serverhost.get_round_data(playerInfo.id, round_counter)
     clearConsole()
 
-	audioStr = binascii.unhexlify(audioStr.encode('utf-8'))
-	waveFile = wave.open("./%d/audio-recording.wav" %playerInfo.id, 'wb')
-	waveFile.setnchannels(CHANNELS)
-	waveFile.setsampwidth(audio.get_sample_size(FORMAT))
-	waveFile.setframerate(RATE)
-	waveFile.writeframes(audioStr)
-	waveFile.close()
+    audioStr = binascii.unhexlify(audioStr.encode('utf-8'))
+    waveFile = wave.open("./%d/audio-recording.wav" %playerInfo.id, 'wb')
+    waveFile.setnchannels(CHANNELS)
+    waveFile.setsampwidth(audio.get_sample_size(FORMAT))
+    waveFile.setframerate(RATE)
+    waveFile.writeframes(audioStr)
+    waveFile.close()
 
-	print(Fore.LIGHTRED_EX +"Type your best guess of what the original word was after hearing audio.")
-	print(Fore.LIGHTRED_EX +"Ready to hear the recording?")
-	ready_check([playerInfo.name], 0)
-	local_play_audio(playerInfo.id)
+    print(Fore.LIGHTRED_EX +"Type your best guess of what the original word was after hearing audio.")
+    print(Fore.LIGHTRED_EX +"Ready to hear the recording?")
+    ready_check([playerInfo.name], 0)
+    local_play_audio(playerInfo.id)
 
 
-	print(Fore.LIGHTRED_EX +"Type 'replay' to re-hear the audio, or just press enter to continue.")
-	localReplayAudioLoop(playerInfo.id)
+    print(Fore.LIGHTRED_EX +"Type 'replay' to re-hear the audio, or just press enter to continue.")
+    localReplayAudioLoop(playerInfo.id)
 
-	print(Fore.LIGHTRED_EX +"Type your answer: ")
-	phrase = input()
-	serverhost.writeFinalGuess(phrase, playerInfo.id, round_counter)
+    print(Fore.LIGHTRED_EX +"Type your answer: ")
+    phrase = input()
+    serverhost.writeFinalGuess(phrase, playerInfo.id, round_counter)
 
 def multidevice_spectate_games(serverhost, player_num, players, playerInfo): 
 	clearConsole()
