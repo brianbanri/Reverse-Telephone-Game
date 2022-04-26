@@ -138,26 +138,34 @@ class ServerHost(object):
     		f.close()
     		return phrase
     	elif (roundNumber < len(players) + 1):
-    		file_path = './hostedGame/game'+str((playerID+roundNumber-1)%len(players))+'/'+str(roundNumber-1)+'-reverse.wav'
+            print("1")
+            if (roundNumber == len(players) and len(players) % 2 == 1):
+                file_path = './hostedGame/game'+str((playerID+roundNumber-1)%len(players))+'/'+str(roundNumber-1)+'.wav'
+            else:
+                file_path = './hostedGame/game'+str((playerID+roundNumber-1)%len(players))+'/'+str(roundNumber-1)+'-reverse.wav'
 
-    		wait_for_file_thread = threading.Thread(target=waitForFile, args=(file_path,), daemon=True)
-    		wait_for_file_thread.start()
-    		wait_for_file_thread.join()
+            print("2")
+            wait_for_file_thread = threading.Thread(target=waitForFile, args=(file_path,), daemon=True)
+            wait_for_file_thread.start()
+            wait_for_file_thread.join()
+            print("3")
 
-    		wf = wave.open(file_path, 'rb')
-    		data = wf.readframes(CHUNK)
-    		b = bytearray()
-    		while len(data) > 0:
-    			b.extend(data)
-    			data = wf.readframes(CHUNK)
+            wf = wave.open(file_path, 'rb')
+            data = wf.readframes(CHUNK)
+            b = bytearray()
+            while len(data) > 0:
+            	b.extend(data)
+            	data = wf.readframes(CHUNK)
+            print("4")
 
-    		#b = ''.join(chr(x) for x in b)
-    		hex_data = binascii.hexlify(b)
-    		str_data = hex_data.decode('utf-8')
+            #b = ''.join(chr(x) for x in b)
+            hex_data = binascii.hexlify(b)
+            str_data = hex_data.decode('utf-8')
+            print("5")
 
-    		wf.close()
+            wf.close()
 
-    		return str_data
+            return str_data
 
     def send_audio_round_data(self, data):
     	playerID = data[0]
