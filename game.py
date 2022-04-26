@@ -297,6 +297,8 @@ def host_game():
 	player_name = input()
 	print()
 
+    print("Starting up server... Please tell your players to wait until you see the lobby to have them join.")
+
 	# Start Pyro NameServer
 	name_server_thread = threading.Thread(target=start_name_server, daemon=True)
 	name_server_thread.start()
@@ -360,16 +362,16 @@ def game_lobby(player_name):
     	user_input = ""
     	while(user_input != "ready" or serverhost.ready() != 1):
     		print_player_list(serverhost.getPlayerList())
-    		if(serverhost.ready() != 1):
-    			print("Host is not ready.")
     		print("\n\nType 'ready' when host starts game (4+ players required) or press enter to refresh the player list.")
+            if(serverhost.ready() != 1):
+                print("\nHost is not ready.")
     		user_input = input().lower()
 
     start_multidevice_game(playerInfo, serverhost)
     shutil.rmtree("./%d" %playerInfo.id, ignore_errors=False, onerror=None)
 
     user_input = ""
-    print("type end game once every player finishes spectating the games")
+    print("Type 'end game' once every player gets to view the games.")
     if(playerInfo.id == 0):
         while(user_input != "end game"):
             user_input = input().lower()
@@ -407,7 +409,9 @@ def multidevice_round1(playerInfo, serverhost):
 
 def multidevice_round2(playerInfo, serverhost):
 	clearConsole()
+    print("Waiting for other players...")
 	data = serverhost.get_round_data(playerInfo.id, 2)
+    clearConsole()
 	phrase = data
 
 	print(Fore.LIGHTRED_EX + "Record yourself saying this word.")
@@ -432,7 +436,9 @@ def load_audio_string_to_wave(audioStr, playerInfo):
 
 def multidevice_reverse_round(playerInfo, serverhost, round_counter):
     clearConsole()
+    print("Waiting for other players...")
     audioStr = serverhost.get_round_data(playerInfo.id, round_counter)
+    clearConsole()
 
     load_audio_string_to_wave(audioStr, playerInfo)
 
@@ -451,7 +457,9 @@ def multidevice_reverse_round(playerInfo, serverhost, round_counter):
 
 def multidevice_interpret_round(playerInfo, serverhost, round_counter):
 	clearConsole()
+    print("Waiting for other players...")
 	audioStr = serverhost.get_round_data(playerInfo.id, round_counter)
+    clearConsole()
 
 	audioStr = binascii.unhexlify(audioStr.encode('utf-8'))
 	waveFile = wave.open("./%d/audio-recording.wav" %playerInfo.id, 'wb')
@@ -476,7 +484,9 @@ def multidevice_interpret_round(playerInfo, serverhost, round_counter):
 
 def multidevice_guess_round(playerInfo, serverhost, round_counter):
 	clearConsole()
+    print("Waiting for other players...")
 	audioStr = serverhost.get_round_data(playerInfo.id, round_counter)
+    clearConsole()
 
 	audioStr = binascii.unhexlify(audioStr.encode('utf-8'))
 	waveFile = wave.open("./%d/audio-recording.wav" %playerInfo.id, 'wb')
@@ -508,9 +518,11 @@ def multidevice_spectate_game(serverhost, player_num, players, game, playerInfo)
     clearConsole()
 
     init_phrase = serverhost.getInitPhrase(game)
+    print("Waiting for other players...")
     final_guess = serverhost.getFinalGuess(game)
+    clearConsole()
 
-    print("\nHere is the playback: ")
+    print("\nViewing: ")
     #LOOP THROUGH PLAYERS AND THEIR INPUTS ONE BY ONE 
 
     print("Press enter to proceed")
