@@ -65,9 +65,65 @@ class ServerHost(object):
     	return game_start
 
     def writeInitPhrase(self, phrase, playerID):
-    	fp = open('./hostedGame/game'+str(playerID)+'/init-phrase.txt', 'w')
-    	fp.write(phrase)
-    	fp.close()
+        fp = open('./hostedGame/game'+str(playerID)+'/init-phrase.txt', 'w')
+        fp.write(phrase)
+        fp.close()
+
+    def writeFinalGuess(self, phrase, playerID, roundNumber):
+        file_path = './hostedGame/game'+str((playerID+roundNumber-1)%len(players))+'/'+'final-guess.txt'
+        fp = open(file_path, 'w')
+        fp.write(phrase)
+        fp.close()
+
+    def getInitPhrase(self, game):
+        fp = open('./hostedGame/game'+str(game)+'/init-phrase.txt', 'r')
+        phrase = fp.read()
+        fp.close()
+        return phrase
+
+
+    def getFinalGuess(self, game):
+        file_path = './hostedGame/game'+str(game)+'/'+'final-guess.txt'
+
+        wait_for_file_thread = threading.Thread(target=waitForFile, args=(file_path,), daemon=True)
+        wait_for_file_thread.start()
+        wait_for_file_thread.join()
+
+        fp = open(file_path, 'r')
+        phrase = fp.read()
+        fp.close()
+        return phrase
+
+    def getAudio(self, game, round, reverse):
+        if (reverse):
+            file_path = './hostedGame/game'+str(game)+'/'+str(round+1)+'-reverse.wav'
+
+            wf = wave.open(file_path, 'rb')
+            data = wf.readframes(CHUNK)
+            b = bytearray()
+            while len(data) > 0:
+            	b.extend(data)
+            	data = wf.readframes(CHUNK)
+
+            #b = ''.join(chr(x) for x in b)
+            hex_data = binascii.hexlify(b)
+            str_data = hex_data.decode('utf-8')
+        else:
+            file_path = './hostedGame/game'+str(game)+'/'+str(round+1)+'.wav'
+            wf = wave.open(file_path, 'rb')
+            data = wf.readframes(CHUNK)
+            b = bytearray()
+            while len(data) > 0:
+            	b.extend(data)
+            	data = wf.readframes(CHUNK)
+            #b = ''.join(chr(x) for x in b)
+            hex_data = binascii.hexlify(b)
+            str_data = hex_data.decode('utf-8')
+
+        wf.close()
+
+        return str_data
+
 
     def get_round_data(self, playerID, roundNumber):
     	if (roundNumber == 2):
@@ -81,7 +137,7 @@ class ServerHost(object):
     		phrase = f.read()
     		f.close()
     		return phrase
-    	elif (roundNumber < len(players)):
+    	elif (roundNumber < len(players) + 1):
     		file_path = './hostedGame/game'+str((playerID+roundNumber-1)%len(players))+'/'+str(roundNumber-1)+'-reverse.wav'
 
     		wait_for_file_thread = threading.Thread(target=waitForFile, args=(file_path,), daemon=True)
@@ -158,29 +214,30 @@ def waitingBar(seconds):
 
 # Function that puts the players on the title screen to start or join a game
 def titleScreen():
-	clearConsole()
+    while(1):
+    	clearConsole()
 
-	# UI Prompt
-	titleScreen = text2art("                       WELCOME                   TO \nREVERSE TELEPHONE GAME", font='big')
-	print(f"{Fore.LIGHTGREEN_EX}{titleScreen}")
-	sleep(promptingDelay)
-	print(Fore.LIGHTRED_EX + "Type \"Start Local Game\" to start a new game on this device")
-	print(Fore.LIGHTRED_EX + "Type \"Host Game\" to host a new game")
-	print(Fore.LIGHTRED_EX + "Type \"Join Game\" to join an existing game")
+    	# UI Prompt
+    	titleScreen = text2art("                       WELCOME                   TO \nREVERSE TELEPHONE GAME", font='big')
+    	print(f"{Fore.LIGHTGREEN_EX}{titleScreen}")
+    	sleep(promptingDelay)
+    	print(Fore.LIGHTRED_EX + "Type \"Start Local Game\" to start a new game on this device")
+    	print(Fore.LIGHTRED_EX + "Type \"Host Game\" to host a new game")
+    	print(Fore.LIGHTRED_EX + "Type \"Join Game\" to join an existing game")
 
-	# Takes user input and lets the user continue when a valid input is given
-	user_input = ""
-	while(not (user_input.lower() in ["host game", "join game", "start local game"])):
-		user_input = input()
-	print()
+    	# Takes user input and lets the user continue when a valid input is given
+    	user_input = ""
+    	while(not (user_input.lower() in ["host game", "join game", "start local game"])):
+    		user_input = input()
+    	print()
 
-	# Starts the program for the following selection
-	if user_input.lower() == "host game":
-		host_game()
-	elif user_input.lower() == "join game":
-		join_game()
-	elif user_input.lower() == "start local game":
-		start_local_game()
+    	# Starts the program for the following selection
+    	if user_input.lower() == "host game":
+    		host_game()
+    	elif user_input.lower() == "join game":
+    		join_game()
+    	elif user_input.lower() == "start local game":
+    		start_local_game()
 
 def start_local_game():
 	clearConsole()
@@ -245,14 +302,14 @@ def host_game():
 	name_server_thread.start()
 
 	# Give time for the nameserver to start
-	sleep(3)
+	sleep(2)
 
 	# Start Pyro ServerHost
 	server_host_thread = threading.Thread(target=start_server_host, daemon=True)
 	server_host_thread.start()
 
 	# Give time for the server host to start
-	sleep(5)
+	sleep(10)
 
 	game_lobby(player_name)
 	
@@ -284,51 +341,63 @@ def print_player_list(players):
 
 def game_lobby(player_name):
 	
-	serverhost = Pyro4.Proxy("PYRONAME:reversetelephone.serverhost")    # use name server object lookup uri shortcut
-	playerInfo = Player(player_name, serverhost.register(player_name))
-	createLocalDirectory(playerInfo.id)
+    serverhost = Pyro4.Proxy("PYRONAME:reversetelephone.serverhost")    # use name server object lookup uri shortcut
+    playerInfo = Player(player_name, serverhost.register(player_name))
+    createLocalDirectory(playerInfo.id)
 
-	print_player_list(serverhost.getPlayerList())
-	if(playerInfo.id == 0):
-		print("\n\nType 'start game' to start the game (4+ players required) or press enter to refresh the player list.")
-		user_input = ""
-		while(user_input != "start game"):
-			print_player_list(serverhost.getPlayerList())
-			print("\n\nType 'start game' to start the game (4+ players required) or press enter to refresh the player list.")
-			user_input = input().lower()
-		serverhost.startGame()
-		createGameDirectories()
-	else:
-		print("\n\nType 'ready' when host starts game (4+ players required) or press enter to refresh the player list.")
-		user_input = ""
-		while(user_input != "ready" or serverhost.ready() != 1):
-			print_player_list(serverhost.getPlayerList())
-			if(serverhost.ready() != 1):
-				print("Host is not ready.")
-			print("\n\nType 'ready' when host starts game (4+ players required) or press enter to refresh the player list.")
-			user_input = input().lower()
+    print_player_list(serverhost.getPlayerList())
+    if(playerInfo.id == 0):
+    	print("\n\nType 'start game' to start the game (4+ players required) or press enter to refresh the player list.")
+    	user_input = ""
+    	while(user_input != "start game"):
+    		print_player_list(serverhost.getPlayerList())
+    		print("\n\nType 'start game' to start the game (4+ players required) or press enter to refresh the player list.")
+    		user_input = input().lower()
+    	serverhost.startGame()
+    	createGameDirectories()
+    else:
+    	print("\n\nType 'ready' when host starts game (4+ players required) or press enter to refresh the player list.")
+    	user_input = ""
+    	while(user_input != "ready" or serverhost.ready() != 1):
+    		print_player_list(serverhost.getPlayerList())
+    		if(serverhost.ready() != 1):
+    			print("Host is not ready.")
+    		print("\n\nType 'ready' when host starts game (4+ players required) or press enter to refresh the player list.")
+    		user_input = input().lower()
 
-	start_multidevice_game(playerInfo, serverhost)
-	shutil.rmtree("./%d" %playerInfo.id, ignore_errors=False, onerror=None)
+    start_multidevice_game(playerInfo, serverhost)
+    shutil.rmtree("./%d" %playerInfo.id, ignore_errors=False, onerror=None)
+
+    user_input = ""
+    print("type end game once every player finishes spectating the games")
+    if(playerInfo.id == 0):
+        while(user_input != "end game"):
+            user_input = input().lower()
+
 
 def start_multidevice_game(playerInfo, serverhost):
-	player_count = len(serverhost.getPlayerList())
+    player_count = len(serverhost.getPlayerList())
 
-	round_counter = 0
+    round_counter = 0
 
-	round_counter += 1
-	multidevice_round1(playerInfo, serverhost)
+    round_counter += 1
+    multidevice_round1(playerInfo, serverhost)
 
-	round_counter += 1
-	multidevice_round2(playerInfo, serverhost)
+    round_counter += 1
+    multidevice_round2(playerInfo, serverhost)
 
-	round_counter += 1
-	while round_counter < player_count:
-		if round_counter % 2 == 1:
-			multidevice_reverse_round(playerInfo, serverhost, round_counter)
-		else:
-			multidevice_interpret_round(playerInfo, serverhost, round_counter)
-		round_counter += 1
+    round_counter += 1
+    while round_counter < player_count:
+        if round_counter % 2 == 1:
+            multidevice_reverse_round(playerInfo, serverhost, round_counter)
+            round_counter += 1
+        else:
+            multidevice_interpret_round(playerInfo, serverhost, round_counter)
+            round_counter += 1
+
+    multidevice_guess_round(playerInfo, serverhost, round_counter)
+
+    multidevice_spectate_games(serverhost, player_count, serverhost.getPlayerList(), playerInfo)
 
 def multidevice_round1(playerInfo, serverhost):
 	clearConsole()
@@ -352,32 +421,35 @@ def multidevice_round2(playerInfo, serverhost):
 	prep_send_audio_round_data(playerInfo, serverhost, 2)
 	print()
 
+def load_audio_string_to_wave(audioStr, playerInfo):
+    audioStr = binascii.unhexlify(audioStr.encode('utf-8'))
+    waveFile = wave.open("./%d/audio-recording.wav" %playerInfo.id, 'wb')
+    waveFile.setnchannels(CHANNELS)
+    waveFile.setsampwidth(audio.get_sample_size(FORMAT))
+    waveFile.setframerate(RATE)
+    waveFile.writeframes(audioStr)
+    waveFile.close()
+
 def multidevice_reverse_round(playerInfo, serverhost, round_counter):
-	clearConsole()
-	audioStr = serverhost.get_round_data(playerInfo.id, round_counter)
+    clearConsole()
+    audioStr = serverhost.get_round_data(playerInfo.id, round_counter)
 
-	audioStr = binascii.unhexlify(audioStr.encode('utf-8'))
-	waveFile = wave.open("./%d/audio-recording.wav" %playerInfo.id, 'wb')
-	waveFile.setnchannels(CHANNELS)
-	waveFile.setsampwidth(audio.get_sample_size(FORMAT))
-	waveFile.setframerate(RATE)
-	waveFile.writeframes(audioStr)
-	waveFile.close()
+    load_audio_string_to_wave(audioStr, playerInfo)
 
-	print(Fore.LIGHTRED_EX +"Record yourself repeating the what you will hear.")
-	ready_check([playerInfo.name], 0)
-	local_play_audio(playerInfo.id)
+    print(Fore.LIGHTRED_EX +"Record yourself repeating the what you will hear.")
+    ready_check([playerInfo.name], 0)
+    local_play_audio(playerInfo.id)
 
-	print(Fore.LIGHTRED_EX +"Type 'replay' to re-hear the audio, or just press enter to start recording.")
-	localReplayAudioLoop(playerInfo.id)
+    print(Fore.LIGHTRED_EX +"Type 'replay' to re-hear the audio, or just press enter to start recording.")
+    localReplayAudioLoop(playerInfo.id)
 
-	local_record_audio(playerInfo.id)
+    local_record_audio(playerInfo.id)
 
-	prep_send_audio_round_data(playerInfo, serverhost, round_counter)
-	print()
+    prep_send_audio_round_data(playerInfo, serverhost, round_counter)
+    print()
 	
 
-def multidevice_interpret_round(player_names, serverhost, round_counter):
+def multidevice_interpret_round(playerInfo, serverhost, round_counter):
 	clearConsole()
 	audioStr = serverhost.get_round_data(playerInfo.id, round_counter)
 
@@ -400,6 +472,90 @@ def multidevice_interpret_round(player_names, serverhost, round_counter):
 
 	prep_send_audio_round_data(playerInfo, serverhost, round_counter)
 	print()
+
+
+def multidevice_guess_round(playerInfo, serverhost, round_counter):
+	clearConsole()
+	audioStr = serverhost.get_round_data(playerInfo.id, round_counter)
+
+	audioStr = binascii.unhexlify(audioStr.encode('utf-8'))
+	waveFile = wave.open("./%d/audio-recording.wav" %playerInfo.id, 'wb')
+	waveFile.setnchannels(CHANNELS)
+	waveFile.setsampwidth(audio.get_sample_size(FORMAT))
+	waveFile.setframerate(RATE)
+	waveFile.writeframes(audioStr)
+	waveFile.close()
+
+	print(Fore.LIGHTRED_EX +"Type your best guess of what the original word was after hearing audio.")
+	print(Fore.LIGHTRED_EX +"Ready to hear the recording?")
+	ready_check([playerInfo.name], 0)
+	local_play_audio(playerInfo.id)
+
+
+	print(Fore.LIGHTRED_EX +"Type 'replay' to re-hear the audio, or just press enter to continue.")
+	localReplayAudioLoop(playerInfo.id)
+
+	print(Fore.LIGHTRED_EX +"Type your answer: ")
+	phrase = input()
+	serverhost.writeFinalGuess(phrase, playerInfo.id, round_counter)
+
+def multidevice_spectate_games(serverhost, player_num, players, playerInfo): 
+	clearConsole()
+	for game in range(player_num):
+		multidevice_spectate_game(serverhost, player_num, players, game, playerInfo)
+
+def multidevice_spectate_game(serverhost, player_num, players, game, playerInfo): 
+    clearConsole()
+
+    init_phrase = serverhost.getInitPhrase(game)
+    final_guess = serverhost.getFinalGuess(game)
+
+    print("\nHere is the playback: ")
+    #LOOP THROUGH PLAYERS AND THEIR INPUTS ONE BY ONE 
+
+    print("Press enter to proceed")
+    input()
+
+
+    for i in range(player_num):
+        if (i==0):
+        	print("%s entered:" %players[i], init_phrase)
+
+        elif (i != player_num-1):
+            print("Press enter to proceed")
+            input()
+            print("%s said:" %players[i])
+
+            audioStr = serverhost.getAudio(game, i, 0)
+            load_audio_string_to_wave(audioStr, playerInfo)
+
+            local_play_audio(playerInfo.id)
+            if (not (i + 1 == player_num - 1 and (player_num % 2 == 1))):
+                print("Press enter to proceed")
+                input()
+                print("%s heard:" %players[i+1])
+
+
+                audioStr = serverhost.getAudio(game, i, 1)
+                load_audio_string_to_wave(audioStr, playerInfo)
+
+                local_play_audio(playerInfo.id)
+        else: 
+            print("Press enter to proceed")
+            input()
+            print("%s thought the original word was: " %players[i], final_guess)
+            if(init_phrase.lower() == final_guess.lower()):
+            	print("And it was indeed ' %s '. Good Job!" %init_phrase)
+            else:
+            	print("But it really was: ' %s '! \n" %init_phrase)
+            if(game == player_num - 1):
+                print("Game Over.")
+            else:
+                print("Press enter to spectate next game.")
+            input()
+
+
+
 
 def prep_send_audio_round_data(playerInfo, serverhost, roundNumber):
 
@@ -602,12 +758,12 @@ def spectate(player_num, players):
 			input()
 			print("%s said:" %players[i])
 			give_audio("./localGame/"+str(i)+".wav")
-			if (i + 1 != player_num - 1):
+			if (not (i + 1 == player_num - 1 and (player_num % 2 == 1))):
 				print("Press enter to proceed")
 				input()
 				print("%s heard:" %players[i+1])
 				give_audio("./localGame/"+str(i)+"-reverse"+".wav")
-		else:
+		else: 
 			print("Press enter to proceed")
 			input()
 			print("%s thought the original word was: " %players[i], final_guess)
@@ -615,6 +771,10 @@ def spectate(player_num, players):
 				print("And it was indeed ' %s '. Good Job!" %init_phrase)
 			else:
 				print("But it really was: ' %s '! \n" %init_phrase)
+
+            print("Game over.")
+            print("Press enter to proceed")
+            input()
 
 
 
