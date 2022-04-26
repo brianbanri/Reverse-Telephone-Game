@@ -737,40 +737,40 @@ def get_final_guess():
 
 #Function to show the proceedings of the game
 def spectate(player_num, players): 
-	clearConsole()
+    clearConsole()
 
-	init_phrase = get_init_phrase()
-	final_guess = get_final_guess()
+    init_phrase = get_init_phrase()
+    final_guess = get_final_guess()
 
-	print("\nHere is the playback, hope you had fun! ")
-	#LOOP THROUGH PLAYERS AND THEIR INPUTS ONE BY ONE 
+    print("\nHere is the playback, hope you had fun! ")
+    #LOOP THROUGH PLAYERS AND THEIR INPUTS ONE BY ONE 
 
-	print("Press enter to proceed")
-	input()
+    print("Press enter to proceed")
+    input()
 
 
-	for i in range(player_num):
-		if (i==0):
-			print("%s entered:" %players[i], init_phrase)
-		
-		elif (i != player_num-1):
-			print("Press enter to proceed")
-			input()
-			print("%s said:" %players[i])
-			give_audio("./localGame/"+str(i)+".wav")
-			if (not (i + 1 == player_num - 1 and (player_num % 2 == 1))):
-				print("Press enter to proceed")
-				input()
-				print("%s heard:" %players[i+1])
-				give_audio("./localGame/"+str(i)+"-reverse"+".wav")
-		else: 
-			print("Press enter to proceed")
-			input()
-			print("%s thought the original word was: " %players[i], final_guess)
-			if(init_phrase.lower() == final_guess.lower()):
-				print("And it was indeed ' %s '. Good Job!" %init_phrase)
-			else:
-				print("But it really was: ' %s '! \n" %init_phrase)
+    for i in range(player_num):
+        if (i==0):
+            print("%s entered:" %players[i], init_phrase)
+
+        elif (i != player_num-1):
+            print("Press enter to proceed")
+            input()
+            print("%s said:" %players[i])
+            give_audio("./localGame/"+str(i)+".wav")
+            if (not (i + 1 == player_num - 1 and (player_num % 2 == 1))):
+            	print("Press enter to proceed")
+            	input()
+            	print("%s heard:" %players[i+1])
+            	give_audio("./localGame/"+str(i)+"-reverse"+".wav")
+        else: 
+            print("Press enter to proceed")
+            input()
+            print("%s thought the original word was: " %players[i], final_guess)
+            if(init_phrase.lower() == final_guess.lower()):
+            	print("And it was indeed ' %s '. Good Job!" %init_phrase)
+            else:
+            	print("But it really was: ' %s '! \n" %init_phrase)
 
             print("Game over.")
             print("Press enter to proceed")
