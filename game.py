@@ -212,7 +212,6 @@ def start_server_host():
 	uri = daemon.register(ServerHost)   # register the greeting maker as a Pyro object
 	ns.register("reversetelephone.serverhost", uri)   # register the object with a name in the name server
 
-	print("Ready.")
 	daemon.requestLoop()                   # start the event loop of the server to wait for calls
 
 
